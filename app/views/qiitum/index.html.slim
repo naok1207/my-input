@@ -1,0 +1,20 @@
+.container
+  .row.d-flex.justify-content-center
+    .col-sm-10.col-12
+      .card.mt-5
+        .card-body
+          .d-flex.justify-content-center
+            table.table
+              thead.border-bottom.border-dark
+                tr
+                  th scope="col"
+                    .mr-3= Qiitum.human_attribute_name :title
+                  th scope="col"
+                    .mr-3= Qiitum.human_attribute_name :url
+              tbody
+                - @qiitum.each do |qiita|
+                  tr
+                    td
+                      .mr-3= qiita.title
+                    td
+                      .mr-3= auto_link(qiita.url)
