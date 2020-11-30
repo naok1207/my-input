@@ -35,5 +35,6 @@ module MyInput
       g.test_framework false
       g.helper false
     end
+    config.time_zone = 'Tokyo'
   end
 end
