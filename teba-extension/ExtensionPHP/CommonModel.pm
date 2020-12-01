@@ -8,7 +8,7 @@ use Data::Dumper;
 my $LIB;
 
 use RewriteTokens;
-use Diff 'diff';
+use Text::Diff 'diff';
 
 
 # パッケージを有効化するため

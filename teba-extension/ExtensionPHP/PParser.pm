@@ -10,7 +10,7 @@ use BracketsID;
 use PEBA2JSON;
 
 
-my $PHParse = "/Users/naoki/teba-1.11/TEBA/PHParse";
+my $PHParse = "/../../teba/TEBA/PHParse";
 
 my $LIB;
 

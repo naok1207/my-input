@@ -9,7 +9,7 @@ use Data::Dumper;
 my $LIB;
 
 use RewriteTokens;
-use Diff 'diff';
+use Text::Diff;
 use Wrong;
 
 
@@ -62,7 +62,7 @@ sub check_rules() {
   $code = RewriteTokens->new()->set_rules(&load_lang_rules($stmt))
     ->rewrite($code);
  
-  my $diff = diff(\$token, \$code);
+  my $diff = &Text::Diff::diff(\$token, \$code);
   
   # 差分ないなら変更されていないのでなにも出力しない
   if ($diff eq '') {

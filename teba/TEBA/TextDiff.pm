@@ -1,4 +1,4 @@
-package Diff;
+package Text::Diff;
 
 use 5.006;
 use strict;

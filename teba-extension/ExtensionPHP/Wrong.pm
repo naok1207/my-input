@@ -9,9 +9,8 @@ use BracketsID;
 
 use PEBA2JSON;
 
-use File::HomeDir;
-my $home = File::HomeDir->my_home;
-my $PHParse = "$home/teba/TEBA/PHParse";
+use FindBin qw($Bin);
+my $PHParse = "$Bin/../../teba/TEBA/PHParse";
 
 my $LIB;
 

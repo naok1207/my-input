@@ -3,10 +3,9 @@ use strict;
 use warnings;
 
 use FindBin qw($Bin);
-use File::HomeDir;
-my $home;
-BEGIN { $home = File::HomeDir->my_home; }
-use lib ("$home/teba/TEBA/PHParse","$home/teba/TEBA","$Bin/../ExtensionPHP");
+use lib ("$Bin/../../teba/TEBA/PHParse","$Bin/../../teba/TEBA","$Bin/../ExtensionPHP");
+
+use Carp qw( confess);
 
 use JSON;
 use WWrong;
