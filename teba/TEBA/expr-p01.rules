@@ -1,0 +1,82 @@
+# 
+# Copyright (c) 2009-2020 The TEBA Project. All rights reserved.
+# 
+# Redistribution and use in source, with or without modification, are
+# permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+# 
+# Author: Atsuhi Yoshida
+
+# 01 left: (), [], ., ->, ++, --, ::
+
+# override @_EXPRS to include temporarl types.
+@_EXPRS => "@_EXPRS|_[BE]_(?:A|OP).*+\n"
+
+# C99 array initializer  struct X s = { .a = 1, .b = 2};
+{ $op:OP_U/\./ $sp:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X }
+=> { ''#1:_B_X $op $sp $bx:B_P $any $ex:E_P ''#1:_E_X }
+
+# for ., ->, ::
+{ $op:OP/\.|->|::/ $sp:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X }
+=> { ''#1:_B_OP01 $op $sp $bx:B_P $any $ex:E_P ''#1:_E_OP01 }
+
+# for [ ] (array)
+{ $al:A_L } => { '':_B_AR $al }
+{ $:_B_AR $al#a:A_L $arg:ANYEXPR $ar#a:A_R }
+=>> { ''#1:_B_OP01 $al $arg $ar ''#1:_E_OP01 }
+
+# for ++, --
+@END => "(?:_E_X|_E_OP01).*+\n"
+{ $end:END $sp:SP $op:OP/\+\+|--/ } 
+=> { $end $sp ''#1:_B_OP01 $op ''#1:_E_OP01 }
+# a++ *b: '*' is not unary.
+{ $e:_E_OP01 $sp:SP $op:OP_U/[-+*\&]/ } => { $e $sp $op:OP }
+
+# for argument lists (); insert _B_A and _E_A
+{ $end:END $sp:SP $bx#x:_B_X $pl#1:P_L $any:ANYEXPR $pr#1:P_R $ex#x:_E_X  }
+=>> { $end $sp ''#1:_B_OP01 ''#a:_B_A $pl $any $pr ''#a:_E_A ''#1:_E_OP01 }
+
+# Connect all operators
+{ $bx#1:_B_X '(?>':X $any:ANYEXPR $ex#1:_E_X ')':X $sp:SP
+  $#m:_B_OP01 $any1:ANYEXPR $#m:_E_OP01 }
+=>> { ''#1:_B_X $bx:B_P $any $ex:E_P $sp $any1 ''#1:_E_X }
+
+# C99 array initializer  int a[] = { [3] = 4, [4] = 5 };
+{ $#1:_B_OP01 $al:A_L $any:ANYEXPR $#1:_E_OP01 }
+=> { ''#1:_B_X $al $any ''#1:_E_X }
+
+# Recognize function references; require _B_A and _E_A
+{ $bn#n:B_P '(?>':X $name:ANYEXPR $en#n:E_P ')':X $sp:SP
+  $ba#a:_B_A $arg:ANYEXPR $ea#a:_E_A }
+=>> { $ba:B_FR $bn $name $en $sp $arg $ea:E_FR }
+
+# for C++ template
+{ $b:_B_X $id:ID_VF $e:_E_X $sp:SP $lt:OP/</ $tp:ID_TP $gt:OP/>/ }
+=> { ''#1:_B_X $b:B_P $id $e:E_P $sp $lt $tp $gt ''#1:_E_X }
+
+
+### funtion definition is not function call (Is this really needed? )
+#{ $br#1:B_FR '(?>':X $call:ANYEXPR $er#1:E_FR ')':X $ex:_E_X $ef:E_FD }
+#=> { $call $ex $ef }
+
+# All operators applied from the back of operands.
+# The operators . and -> are followd by member name.
+# (\.|->) _B_X id _E_X => _B_OP01 (\.|->) B_P id E_P _E_OP01
+# _E_X (\+\+|--|[...]) => _E_X _B_OP01 (\+\+|--|[...]) _E_OP01
+# _B_X ... _E_X _B_OP01 ... _E_OP01 => _B_X B_P ... E_P ... _E_X

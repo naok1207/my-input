@@ -1,0 +1,8 @@
+%before
+${v:ID_VF} = total(${ar:EXPR}, ${n:EXPR});
+%after
+${v} = total(${ar}, ${n});
+#ifdef DEBUG_TOTAL
+fprintf(stderr, "DEBUG: total = %d (at %d)\n", ${v}, __LINE__);
+#endif
+%end

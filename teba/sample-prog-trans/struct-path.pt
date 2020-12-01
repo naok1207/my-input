@@ -1,0 +1,6 @@
+%before
+x-> ${%begin} y->_value ${%end};
+/* the semicolon is needed to exclude E_ST */
+%after
+value
+%end

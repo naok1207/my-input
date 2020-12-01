@@ -1,0 +1,6 @@
+${%begin}
+break;
+case ${:EXPR}:
+${%end}
+f();
+

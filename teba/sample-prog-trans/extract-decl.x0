@@ -1,0 +1,6 @@
+static char a;
+static char b = 'b';
+static char **c[];
+size_t s[] = {0, 1, 2};
+size_t f(int c, int d);
+size_t *p = NULL;

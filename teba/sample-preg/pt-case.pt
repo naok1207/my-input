@@ -1,0 +1,7 @@
+case x:
+${%begin}
+#ifdef ${:EXPR}
+case ${:EXPR}:
+#endif
+${%end}
+f();

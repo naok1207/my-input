@@ -1,0 +1,90 @@
+//F1 F2 E2
+int c, f1, f21;
+//F1 F2 !E2
+int c, f1, f21;
+//F1 !F2 E2
+int c, f1, f22;
+//F1 !F2 !E2
+int c, f1, f22;
+//!F1 F2 E2
+int c, e21;
+//!F1 F2 !E2
+int c, e22;
+//!F1 !F2 E2
+int c, e21;
+//!F1 !F2 !E2
+int c, e22;
+
+int f1() {
+#ifdef F2 /* TEBA:mark */
+#ifdef E2 /* TEBA:mark */
+  int c
+#ifdef F1 /* TEBA:markx */
+    ,f1
+    ,f21
+#else //F1
+    ,e21
+#endif //F1
+    ;
+#else //E2
+  int c
+#ifdef F1 /* TEBA:markx */
+    ,f1
+    ,f21
+#else //F1
+    ,e22
+#endif //F1
+    ;
+#endif //E2
+#elif defined E2 /* TEBA:mark */
+  int c
+#ifdef F1 /* TEBA:markx */
+    ,f1
+    ,f22
+#else //F1
+    ,e21
+#endif //F1
+    ;
+#else //E2
+  int c
+#ifdef F1 /* TEBA:markx */
+    ,f1
+    ,f22
+#else //F1
+    ,e22
+#endif //F1
+    ;
+#endif //E2
+}
+
+#ifdef 0
+int f1() {
+#ifdef F2 /* TEBA:mark */
+  int c
+#ifdef F1 /* TEBA:markx */
+    ,f1
+    ,f21
+#else  //F1
+#ifdef E2 /* TEBA:markx */
+    ,e21
+#else //E2
+    ,e22
+#endif //E2
+#endif //F1
+    ;
+#else //F2
+  int c
+#ifdef F1 /* TEBA:markx */
+    ,f1
+    ,f22
+#else  //F1
+#ifdef E2 /* TEBA:markx */
+    ,e21
+#else //E2
+    ,e22
+#endif //E2
+#endif //F1
+    ;
+#endif //F2
+}
+#endif

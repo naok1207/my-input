@@ -1,0 +1,85 @@
+# 
+# Copyright (c) 2009-2020 The TEBA Project. All rights reserved.
+# 
+# Redistribution and use in source, with or without modification, are
+# permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+# 
+# Author: Atsuhi Yoshida
+
+
+# for "include", which has a return value.
+{ $[inc: $:RE_INC $:SP $#1:_B_X $:ANY $#1:_E_X $] }
+=> { ''#1:_B_X $inc ''#1:_E_X }
+
+# compound block
+{ $b:_B_X $cl:C_L } => { $b:_B_S $cl }
+{ $cr:C_R $e:_E_X } => { $cr $e:_E_S }
+
+
+{ $b:_B_X } => { $b:B_P }
+{ $b:_E_X } => { $b:E_P }
+
+# remove [BE]_P for single & operator, which refers the left value.
+{ $bp#1:B_P $op:OP/&/ $sp:SP $#2:B_P $any:ANYEXPR $#2:E_P }
+  => { $bp $op $sp $any }
+
+# function calls
+{ $b#1:B_P $[call:
+  [: $#2:B_P '(?>':X $:ANYEXPR $#2:E_P ')':X
+  | $:ID_TP ] $:SP  # was $:XID_TP. why?
+    $#p:P_L '(?>':X $arg:ANYEXPR $#p:P_R ')':X  ] $e#1:E_P }
+=>> { $b ''#1:B_FC $call ''#1:E_FC $e }
+
+# flatten comma expressions
+
+# # mark removal [BE]_P
+{ $ca1:CA $sp1:SP $bp1#1:B_P $any:ANYEXPR $ep1#1:E_P $ep2:E_P $sp2:SP $ca2:CA }
+=>> { $ca1 $sp1 $bp1 $any $ep1 $ep2:_E_PX $sp2 $ca2 }
+
+# # remove marked [BE]_P
+{ $bp#1:B_P '(?>':X $any:ANYEXPR $ep#1:_E_PX ')':X } =>> { $any }
+
+# # remove [BE]_P with parenthesis and array
+{ $pl:/[AP]_L/ $sp:SP $bp1:B_P
+  [e: $#1:B_P '(?>':X $:ANYEXPR $#1:E_P ')':X $:SP $:CA ] }
+  =>> { $pl $sp $bp1:_B_P $e }
+
+# # remove [BE]_P in use phrases
+{ $u:RE_USE $sp:SP $bp1:B_P
+  [e: $#1:B_P '(?>':X $:ANYEXPR $#1:E_P ')':X $:SP $:CA ] }
+  => { $u $sp $bp1:_B_P $e }
+
+# # remove [BE]_P in { } of use.
+{ [cl: $:OP/\\\\/ $:SP $:B_P $:C_L ] $sp:SP $bp1:B_P
+  [e: $#1:B_P '(?>':X $:ANYEXPR $#1:E_P ')':X $:SP $:CA ] }
+  => { $cl $sp $bp1:_B_P $e }
+
+# # remove all _B_Ps
+{ $#1:_B_P '(?>':X $any:ANYEXPR $#1:E_P ')':X } =>> { $any }
+
+
+# arrow function
+
+{ $#1:B_P $#fc:B_FC $:B_P $name:ID_C $:E_P $sp1:SP
+  $pl#a:P_L $arg:ANYEXPR $pr#a:P_R $#fc:E_FC $#1:E_P
+  [def: $:SP $:OP/=>/ $:SP $#2:B_P $:ANYEXPR $#2:E_P ] }
+=> { ''#1:B_F $name $sp1 $pl $arg $pr $def ''#1:E_F }
+#=> { ''#1:B_F $name $sp1 $pl '':_ARG $arg $pr $def ''#1:E_F }
+## ## mark _ARG is used for argument analysis in stmt-final.rules.

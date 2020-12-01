@@ -1,0 +1,14 @@
+
+#ifdef X
+if (c) {
+  f();
+ } 
+ else
+   {
+     g();
+   }
+#else
+   {
+     g();
+   }
+#endif

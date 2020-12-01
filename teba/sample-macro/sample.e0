@@ -1,0 +1,29 @@
+/* test */
+#define BLOCK(f, y)  do { f(y); g(y); } while(0)
+do { block_func(x1); g(x1); } while(0);
+/* If the argument y is a structured expression, the reverse pattern
+   does not work. This is because the back reference facility does
+   not support pair-ids. */
+
+#define F(a, b) f(a, b)
+f(x, ((a) + (b)));
+
+#define ADD(a, b) ((a) + (b))
+int x = (((((a) + (b))) + (c)));
+
+#define VAR_HOGE(v) hoge_ ## v
+int hoge_ika;
+
+#define PREFIXED_FUNCTIONS(name, func)		\
+  int teba_##name (T a, T b)			\
+  { return func (a, b); }
+
+int teba_next (T a, T b)  { return add (a, b); }
+
+#define print_int_var(v) printf("debug: %s = %d\n", #v, v)
+printf("debug: %s = %d\n", "x", x);
+printf("debug: x = %d\n", x); /* difficult */
+
+#define cond(c, f) if (c) { f(); }
+
+if (a > 0) { positive_a(); };

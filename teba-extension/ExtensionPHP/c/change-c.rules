@@ -1,0 +1,28 @@
+# IF_model
+{ $:MODEL/IF/ $:B_COND $cond:ANY $:E_COND }
+=> { 'if':CT_IF '(':P_R $cond:COND ')':P_L '{':C_L }
+
+# ELSEIF_model
+{ $:MODEL/ELSEIF/ $:B_COND $cond:ANY $:E_COND }
+=> { 'else':CT_EL ' ':SP_B 'if':CT_IF '(':P_R $cond:COND ')':P_R '{':C_L }
+
+# ELSE_model
+{ $:MODEL/ELSE/ }
+=> { 'else':CT_EL '{':C_L }
+
+# WHILE_model
+{ $:MODEL/WHILE/ $:B_COND $cond:ANY $:E_COND }
+=> { 'while':CT_BE '(':P_R $cond:COND ')':P_L '{':C_L }
+
+# FOR_model(end_NOT_include)
+{ $:MODEL/FOR/ $var:VAR $:B_INI $ini:ANY $:E_INI $:B_END $end:ANY $:E_END $:END_INCLUDE/False/ }
+  => {'for':CT_BE '(':P_L $var:ID_C '=':OP $ini:INI ';':SC $var:ID_C '<':OP $end:END ';':SC $var:ID_C '++':OP ')':P_R '{':C_L}
+
+# FOR_model(end_include)
+{ $:MODEL/FOR/ $var:VAR $:B_INI $ini:ANY $:E_INI $:B_END $end:ANY $:E_END $:END_INCLUDE/True/ }
+   => {'for':CT_BE '(':P_L $var:ID_C '=':OP $ini:INI ';':SC $var:ID_C '<=':OP $end:END ';':SC $var:ID_C '++':OP ')':P_R '{':C_L}
+
+# FOREACH_model
+{ $:MODEL/FOREACH/ $var:VAR $:B_ARR $array:ANY $:E_ARR }
+ => {'for':CT_BE '(':P_L $array:ID_C '[i]':ARRAY_IDX '=':OP '0':LIN ';':SC $var:ID_C '<':OP '/*array_size*/':ARRAY_SIZE ';':SC 'i':ID_C '++':OP ')':P_R '{':C_L #'\n':SP_NL
+     $var:ID_C '=':OP $array:ARRAY '[i]':ARRAY_IDX ';':FSC}

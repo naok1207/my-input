@@ -1,0 +1,8 @@
+% recursive
+%before
+  ${stmt:STMT}
+  ${decl:DECL}
+%after
+${decl}
+${stmt}
+%end

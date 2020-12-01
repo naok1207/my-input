@@ -1,0 +1,111 @@
+# 
+# Copyright (c) 2009-2020 The TEBA Project. All rights reserved.
+# 
+# Redistribution and use in source, with or without modification, are
+# permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+# 
+# Author: Atsuhi Yoshida
+
+#
+# Definition of Tokens
+#
+
+# Spaces and newlines
+SP_B	/\f|[ \t]+/
+SP_NL	/\n/
+#SP_NC	/\\\n/
+
+# Comment is a kind of spaces.
+SP_C	/\/\*.*?\*\/|(?>(?:\/\/|#)[^\n]*)/
+
+# Control word followed by condition expressions and a block
+# "BE" means "Block" and "Expression"
+CT_BE  /(?i)(?:for|while|switch|foreach|declare|catch)\b/
+CT_IF  /(?i)if\b/
+CT_EIF  /(?i)elseif\b/
+# Control word followed by a block
+CT_EL	/(?i)(?:else)\b/
+CT_DO	/(?i)(?:do)\b/
+CT_EN	/(?i)end(?:if|while|for(?:each)?|switch)\b/
+CT_TRY  /(?i)(?:try|finally)\b/
+
+# Reserved words
+RE_CL	/(?i)(?:class|trait|interface)\b/
+RE_EX	/(?i)(?:extends|implements)\b/
+RE_NA	/(?i)namespace\b/
+RE_LC	/(?i)case\b/
+RE_LD	/(?i)default\b/
+RE_JP	/(?i)(?:return|continue|break|throw)\b/
+RE_JPG	/(?i)goto\b/
+RE_REQ  /(?i)require(?:_once)?\b/
+RE_INC  /(?i)include(?:_once)?\b/
+RE_DECL  /(?i)declare\b/
+RE_F	 /(?i)function\b/
+RE_USE	 /(?i)use\b/
+# attributes of property
+RE_PAT	 /(?i)(?:public|private|protected|static|abstract|final|const)\b/
+
+# Types
+ID_TP	/\??(?:(?i)(?:int(?:eger)?|bool(?:ean)?|float|double|real|string|array|object|unset|binary|unset|iterable|void|callable))\b/
+
+
+OP	/(?i)(?:clone|new|and|xor|or|instanceof)\b/
+
+P_L	/\(/
+P_R	/\)/
+A_L	/\[/
+A_R	/\]/
+C_L	/{/
+C_R	/}/
+SC	/;/
+CA	/,/
+
+# literal strings and chars
+LIS	/"(?:[^"\\]++|\\.)*+"/
+LIC	/'(?:[^'\\]++|\\.)*+'/
+LIS	/`(?:[^`\\]++|\\.)*+`/
+
+LIH	/<<<\s+(?<h>\w+)\n(?:.|\n)*?\k<h>(?=;?\n)/
+
+# literal numbers
+LIN	/0[xX][0-9A-Fa-f_]+/
+LIN	/0[bB][01_]+/
+LIN	/\d[\d_]*(?:\.[\d_]+(?:[eE][-+]?[\d_]+)?|[eE][-+]?[\d_]+)/
+LIN	/\.[\d_]+(?:[eE][-+]?[\d_]+)?/
+LIN	/\d[\d_]*/
+
+# built-in commands, which are not fuctions.
+CMD	/(?i)(?:echo|print)\b/
+
+# The reserve tokens using as operators. This rule should be before ID_*.
+OP	/(?i)(?:as|insteadof)\b/
+
+ID_V	/\$\w+/
+ID_C	/[a-zA-Z_]\w*/
+# ID_C may be a fuction name, and it will be converted to ID_F.
+#ID_C   /[a-zA-Z_]\w*(?:\\\w+)*/
+
+# separator of namespace
+OP /\\/
+
+# variable arguments
+OP     /\.\.\./
+
+OP     /\+\+|\*(?:\*=?)?|\-[->]|\&\&|\|\||=>|(?:>>|<<|[-+\/\%>&|~^]|[!=]=?)=?|<(?:=>?)?|\?\?=?|\?|[\.@]|::?|\$/

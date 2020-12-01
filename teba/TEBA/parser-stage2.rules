@@ -1,0 +1,127 @@
+# 
+# Copyright (c) 2009-2020 The TEBA Project. All rights reserved.
+# 
+# Redistribution and use in source, with or without modification, are
+# permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+# 
+# Author: Atsuhi Yoshida
+
+##### The rules for Function #####
+
+####
+# function_definition:
+#   declaration_specifiers declarator declaration_list? compout_statement
+# declaration_specifiers:
+#   (storage_class_specifier|type_specifier|type_qualifier|function_specifier)+
+#   [Note: type_specifier includes primitive types.]
+#
+
+@DECL_SPEC => "(?:IDN|ID_TP|ATTR).*+\n|@_STRUCT_REF"
+@DECL_ELEM => "(?:ID|[PA]_|CA|LIN|ATTR|PRE_JOIN).*+\n|OP\s+<\*>\n|@_STRUCT_REF"
+@FNAME => "(?:IDN|ID_VF).*\n(?:@SP(?:PRE_JOIN.*\n)@SP(?:IDN|ID_VF).*\n)*+"
+@FDECL => "(?:@_SP|@DECL_ELEM)*?"
+@F_TAIL => "(?:(?:ID_TP|IDN|C_L).*+\n)|SC\s+<>|@_STRUCT_REF"
+
+{ $b:B_ST $[spec: $:DECL_SPEC $:SP
+  $[: $[: $:OP/\*/ $| $:DECL_SPEC $| $#sp:P_L $:FDECL $#sp:P_R $] $:SP $]* $]
+  $[name: $:FNAME $| $#fn:P_L $:SP $[: $:OP/\*/ $:SP $]? $:FNAME $:SP
+    $[fptr_arg: $#pa:P_L $:FDECL $#pa:P_R $]? $#fn:P_R $] $sp:SP
+  $pl#arg:P_L $arg:FDECL $pr#arg:P_R }
+=> { $b ''#1:B_FD $spec $name $sp $pl $arg $pr ''#1:E_FD }
+@:NO_MATCH:END_FUNCDEF:
+
+# The function definitions have a wide variety. The above rule
+# identify the following examples:
+#  glthread_create_func() in coreutils-8.16/gnulib-tests/glthread/thread.c
+#  INTERNAL(strtol)() in coreutils-8.16/lib/strtol.c
+#  re_set_fastmap() in coreutils-8.16/lib/regcomp.c
+
+{ $bs:B_ST $bfd#1:B_FD '(?>':X $any:FDECL $efd#1:E_FD ')':X $sp:SP $ft:F_TAIL }
+=> { ''#1:_B_FUNC $bfd $any $efd $sp ''#1:_E_FUNC $bs $ft}
+
+# The above two rules should not be integrated, because there are cases that
+# macro statements are merged into heads of function definitions by the
+# following rule. The example is:
+# xstrtol() coreutils-8.16/lib/xstrtol.h.
+
+{ $e:_E_FUNC $b:B_ST $:SC// $:E_ST } => { $e }
+# SC is to be inserted by macro-stmt.rules. By this rule, the following
+# functions are indentified correctly:
+# fseeko() in coreutils-8.16/lib/fseeko.c
+# ftello() in coreutils-8.16/lib/ftello.c
+
+# for argument declarations in K&R style definitions.
+{ $ef:_E_FUNC $sp:SP $bs#s:B_ST $[spec: $:DECL_SPEC $]+ '(?>':X $d:ANY $es#s:E_ST ')':X }
+=>> { $sp $bs $spec $d $es $ef }
+
+@ANYSTMT => "(?:(?:[^E].*+\n)*+|(?:E.*+\n))*?"
+# This is a work arround to match longer body blocks, which exceed
+# the repeat limit of perl regex.
+# (ex. coreutils-8.16/gnulib-tests/test-vasprintf-posix.c)
+
+# find function bodies.
+{ $ef:_E_FUNC $sp:SP $bs#s:B_ST $cl:C_L $body:ANYSTMT $es#s:E_ST }
+=>> { $sp $bs $cl $body $es $ef:E_FUNC }
+
+# if the function body is found, change _B_FUNC to B_FUNC.
+{ $b#1:_B_FUNC '(?>':X $any:ANYSTMT $e#1:E_FUNC ')':X } =>> { $b:B_FUNC $any $e}
+# The above two rules are need to be applied recusively because functions
+# may contain local function definitions, for example, parse_bracket_exp() in
+# coreutils-8.16/lib/regcomp.c has lookup_collation_sequence_value().
+
+# cleanup: remove miss recognized function declarations.
+# restore B_ST to the original place, and remove _[BE]_FUNC
+{ $b:_B_FUNC $bfd#1:B_FD '(?>':X $any:FDECL $efd#1:E_FD ')':X $sp:SP
+  $[: $:_E_FUNC $]? $bst:B_ST }
+=> { $bst $any $sp }
+# restore B_ST and E_ST which have been removed with SC//.
+{ $b:_B_FUNC $bfd#1:B_FD '(?>':X $any:FDECL $efd#1:E_FD ')':X $e:_E_FUNC }
+=> { ''#1:B_ST $any ''#1:E_ST }
+
+{ $:_E_FUNC } => {}
+{ $bs:B_ST $#1:B_FD '(?>':X $any:ANY $#1:E_FD ')':X } => {$bs $any}
+
+@:LABEL:END_FUNCDEF:
+
+####
+
+# For checking miss recognitions of function definition (except K&R).
+
+#@PSP => "(?:@_SP|P_R.*+\n)*"
+#{ $b#func:B_ST '(?>':X $head:FDECL $id:IDN $psp:PSP
+#  $pl#arg:P_L $arg:FDECL $pr#arg:P_R 
+#  $sp:SP $cl:C_L ')':X $body:ANYSTMT $e#func:E_ST }
+#=> { $b:B_XFUNC $head $id $psp $pl $arg $pr $sp 
+#     ''#1:B_ST $cl $body ''#1:E_ST $e:E_XFUNC }
+
+#####--- prepare for identifying conditional statemens ---#####
+
+##### The rules for loop and switch statement (which never have "else"). #####
+# while (cond) => _B_CT while (cond) _E_CT
+# [BE]_CTs are to be removed in the later stage.
+
+{ $ctrl:CT_BE $sp:SP $pl#p:P_L '(?>':X $cond:ANYCOND $pr#p:P_R ')':X }
+=> { ''#1:_B_CT $ctrl $sp $pl $cond $pr ''#1:_E_CT }
+
+##### The rules for conditional statement. #####
+
+# if (cond) => _B_IF if (cond) _E_IF
+{ $if:CT_IF $sp:SP $pl#p:P_L '(?>':X  $cond:ANYCOND $pr#p:P_R ')':X }
+=> { ''#1:_B_IF $if $sp $pl $cond $pr ''#1:_E_IF }

@@ -1,0 +1,13 @@
+${%begin}
+${:TYPE} ${:FNAME}(${:ARGLIST})
+${%end}
+{
+}
+
+%%---
+
+${%begin}
+${:TYPE} *${:FNAME}(${:ARGLIST})
+${%end}
+{
+}

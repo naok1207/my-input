@@ -1,0 +1,50 @@
+
+#ifdef P
+{ if (
+	  x) { }	  }
+#elif Q
+  { while (
+	  x) { }	  }
+#else
+    { if (0 &&
+	  x) { }	  }
+#endif
+
+
+
+
+#ifdef A
+#else
+#ifdef X
+if (
+x){{
+  f;
+	}}
+#else
+#if Y
+if (
+  y)  {{
+	}
+}
+#else
+if (
+      z) {{
+  g;
+	}
+}
+#endif
+
+#endif
+
+#endif
+
+#ifdef A
+#elif defined X
+{
+  f();
+}
+#else
+{
+  g();
+}
+#endif

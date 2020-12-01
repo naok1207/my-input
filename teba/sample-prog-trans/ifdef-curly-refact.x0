@@ -1,0 +1,19 @@
+
+#ifdef X
+if (x > 0) {
+  x++;
+
+  proc();
+
+}
+#else
+if (y > 0) {
+  y++;
+
+  proc();
+
+}
+#endif
+if (z > 0) {
+  z--;
+}

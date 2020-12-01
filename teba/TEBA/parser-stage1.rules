@@ -1,0 +1,170 @@
+# 
+# Copyright (c) 2009-2020 The TEBA Project. All rights reserved.
+# 
+# Redistribution and use in source, with or without modification, are
+# permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+# 
+# Author: Atsuhi Yoshida
+
+
+##### The rules for expression statements #####
+
+## Insert E_STs
+@CR_SC => "(?:C_R|SC).*+\n"
+@EXPR_END => "(?:ID|LI|OP|[AP]_R|CA).*+\n"
+@_STMT => "(?:@_STMT|_[BE]_LB.*+\n)"
+
+{ $end:CR_SC } => { $end '':E_ST }
+{ $end:EXPR_END $sp:SP $cl:/C_R|UNIT_END/ } => { $end '':E_ST $sp $cl }
+
+## namespace declaration ('namespace' is not always used as a reserved word.)
+{ $n:IDN/namespace/ $sp1:SP $id:IDN $sp2:SP $cl:C_L }
+=> { '':B_ST $n:RE_NAME $sp1 $id $sp2 $cl }
+
+## Insert B_STs
+@STMT_PRE => "(?:E_ST|C_L|UNIT_BEGIN).*+\n"
+@STMT_TOP => "(?:ID|LI|RE_|OP|CT|P_L|ATTR|C_L|SC|CA|PRE_S).*+\n"
+# CA is a trick to parse initial expressions of arrays appearing
+# out of initial expression context, such as in macros.
+
+{ $pre:STMT_PRE $sp:SP $st:STMT_TOP } =>> { $pre $sp '':B_ST $st }
+{ $pl:P_L $sp:SP $cr:C_L } => { $pl $sp '':B_ST $cr }
+
+@CSTMT_TOP => "(?:CT|C_L).*+\n"
+{ $pre:B_MCB  $sp:SP $st:CSTMT_TOP } => { $pre $sp '':B_ST $st }
+
+# The rules for parsing in macro definition. do-while() and if() may appear in
+# arguments of macro defs. ex.the macro "cpy" in coreutils-8.16/lib/strftime.c 
+{ $pre:/P_L|CA/ $sp1:SP $ctrl:/CT_.*/ $sp2:SP }
+  => { $pre $sp1 '':B_ST $ctrl $sp2 }
+# It seems that a combination of separated rules for P_L and CA works faster
+# than this integrated rule.
+
+# At this point, B/E_STs may not balanced. These rules do not 
+# insert B_STs in front of statements in conditional statements.
+
+##### The rules for initial expressions of declarations #####
+
+@INITEXPR =>"(?:@_SP|@_EXPRS|(?:C_|SC).*\n|[BE]_ST.*+\n)*?"
+{ $eq:OP/=/ $sp1:SP $cl#1:C_L $decls:INITEXPR $cr#1:C_R $e1:E_ST
+  $sp2:SP $[: $:B_ST $]? }
+=> { $eq $sp1 ''#1:B_CP $cl $decls $cr ''#1:E_CP $sp2 }
+
+##### Compund literals #####
+# &(type) {v1, v2, ...}, (type) {v1, v2, ...}
+
+@TYPE_REF => "(?:(?:RE_SUE.*+\n)@SP)?(?:ID.*+\n)"
+@IN_EXPR => "(?:P_L|CA|OP).*+\n"
+{ $i:IN_EXPR $sp1:SP $pl#1:P_L $sp2:SP $type:TYPE_REF $sp3:SP $pr#1:P_R $sp4:SP
+  $cl#2:C_L '(?>':X $e:ANY $cr#2:C_R ')':X $en:E_ST $sp5:SP $[: $:B_ST $]? }
+=> { $i $sp1 $pl $sp2 $type $sp3 $pr $sp4 ''#1:B_CP $cl $e $cr ''#1:E_CP $sp5 }
+# EBGIN_STs may be inserted when followed by a semicolon.
+# ex. int *p = &(int){1};"
+
+##### remove extra B/E_ST between [BE]_CP, which may introduce unbaranced pairs.
+{ $:/[BE]_ST/ in CP } => { }
+
+##### The rules for struct/union/enum  ######
+
+{ $st:RE_SUE $[tag: $:SP $:IDN $]? } => {'':B_SUE $st $tag '':E_SUE }
+
+{ $e:E_SUE $sp:SP $cl#1:C_L '(?>':X $decls:ANY $cr#1:C_R ')':X $:E_ST
+  $sp2:SP $[: $:B_ST $]? }
+=>> { $sp $cl $decls $cr $e $sp2 }
+
+## for enum
+
+{ $enum:RE_SUE/enum/ $sp1:SP $[tag: $:IDN $:SP $]?  $cl#1:C_L $sp2:SP 
+  $be:B_ST $any:ANYEXPR $en:E_ST $sp3:SP $cr#1:C_R }
+=> { $enum $sp1 $tag $cl $sp2 $any $sp3 $cr }
+
+##### The rules for separators in for-stmts. #####
+# remove extra B_ST and E_ST in condtions
+# for (...; E_ST B_ST ...; E_ST B_ST ...)
+#   => for (...; ...; ...)
+
+#{ $for:CT_BE/for/ $sp0:SP $pl#1:P_L '(?>':X $init:ANYEXPR $semi1:SC ')':X
+#  $e1:E_ST $sp1:SP $b1:B_ST '(?>':X $cond:ANYEXPR $semi2:SC ')':X
+#  $e1:E_ST $sp2:SP $[: $:B_ST $]? $succ:ANYEXPR $pr#1:P_R }
+#=> { $for $sp0 $pl $init $semi1  $sp1 $cond $semi2  $sp2 $succ $pr }
+
+# Ignore illegal semicolons in conditions for all CT_BE, including 'while'.
+# Begineers may insert semicolons in conditions.
+{ $for:/CT_(?:BE|IF)/ $sp:SP $pl:P_L } => { $for $sp $pl '':_FOR0 }
+# set stopper for _FOR0
+{ $for:/CT_(?:BE|IF)/ $sp:SP $pl#1:P_L '(?>':X $cond:ANY $pr#1:P_R ')':X }
+  => { $for $sp $pl $cond $pr '':_FOR1 }
+
+{ $m:_FOR0 '(?>':X $cond:ANYEXPR $semi:SC ')':X $:E_ST $sp:SP $[: $:B_ST $]? }
+=>> { $cond $semi $sp $m }
+
+{ $m:/_FOR[01]/ } => {}
+
+##### The rules for label ######
+
+# For distingiushing symbols ':' of ternary operators "?:" and labels.
+{ $op1:OP/\?/ $any:ANYEXPR $op2:OP/:/ } =>> { $op1:OP_T $any $op2:OP_T }
+
+{ $case:RE_LC $sp:SP $label:ANYEXPR $co:OP/:/ } 
+=> { ''#1:_B_LB $case $sp $label $co:OP_L ''#1:_E_LB }
+
+# user-defined label or default label
+{ $pre:/B_ST|_E_LB|P_R|B_MCB/ $sp1:SP $label:/IDN|RE_LD/ $sp2:SP $co:OP/:/ }
+=>> { $pre $sp1 ''#1:_B_LB $label $sp2 $co:OP_L ''#1:_E_LB }
+# $pre is needed to distinguish contexts of colons. Colons are also used
+# in ternary operators and definitions of struct members (for sizes). 
+
+# The label at the top of macro body.
+{ $bm:B_MCB $lb:_B_LB } => { $bm '':B_ST $lb }
+
+# Move labels to outside of statements.
+# "BE_ST LABEL: if (x) { ... }" => "LABEL: BE_ST if (x)"
+{  $bs:B_ST $bl#1:_B_LB $label:ANYSTMT $el#1:_E_LB $sp:SP }
+=>> { $bl $label $el $sp $bs }
+
+##### The rules for Expression statements Context: Control statement #####
+
+{ $be:B_ST $[ctrl:
+     $:/CT_(?:BE|IF)/ $:SP $[: $#1:P_L '(?>':X $:ANY $#1:P_R ')':X $]
+  $| $:/CT_(?:EL|DO)/ $] $sp:SP
+  $[label: $#L:_B_LB '(?>':X $:ANY $#L:_E_LB ')':X $:SP $]* }
+=>> { $ctrl $sp $label $be }
+
+##### add lacked B/E_STs in macro definitions
+
+# Non terminated statements in macro definitions.
+#@EJ_ST => "(?:RE_JP.*+\n)?@ANYEXPR"
+#{ $be:B_ST $e:EJ_ST $em:E_MCB  } => {$be $e '':E_ST $em }
+# repeatation of tokens except B_DIRE and E_ST.
+@NON_ST => "(?:(?:[^BE]|B_[^D]|E_(?:[^S]|SCT)).*\n)*?"
+{ $be:B_ST '(?>':X $e:NON_ST $em:E_MCB ')':X } => {$be $e '':E_ST $em }
+
+# insert B_ST for statement lacking it. ex "#define HOGE f(); g()"
+@|BeginEnd->new()->conv|
+{ $be#1:B_MCB $any:ANYSTMT $en#1:E_ST } => { $be '':B_ST $any $en }
+@:NO_MATCH:END_LACK:
+@|BeginEnd->new()->conv|
+@:LABEL:END_LACK:
+
+# all 'defined's in 'if' and 'elif' directive are operator
+{ $be#1:B_DIRE [head: $:PRE_TOP $:SP $:PRE_DIR/(?:el)?if/ ] '(?>':X $any1:ANY $d:DEFINED ')':X $any2:ANY $en#1:E_DIRE }
+=>> { $be $head $any1 $d:OP $any2 $en }
+# The others are identifiers.
+{ $d:DEFINED } => { $d:IDN }

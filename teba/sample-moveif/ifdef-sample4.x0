@@ -1,0 +1,49 @@
+int g() {
+#ifdef A /* TEBA:mark */
+   a
+#ifndef X
+     ;
+#else
+   +b;
+#endif
+#elif !defined X
+     ;
+#else
+   +b;
+#endif
+  
+}
+
+int f(int x, int y) {
+#ifdef COND /* TEBA:mark */
+#ifdef MULT /* TEBA:mark */
+  if (x > y)
+  return (x * y)
+    ; /* end */
+#elif ADD /*TEBA:mark*/
+  if (x > y)
+  return (x + y)
+    ; /* end */
+#elif SUB /*TEBA:mark*/
+  if (x > y)
+  return (x - y)
+    ; /* end */
+#else
+  if (x > y)
+    return 0
+    ; /* end */
+#endif
+#elif defined MULT /* TEBA:mark */
+  return (x * y)
+    ; /* end */
+#elif ADD /*TEBA:mark*/
+  return (x + y)
+    ; /* end */
+#elif SUB /*TEBA:mark*/
+  return (x - y)
+    ; /* end */
+#else
+    return 0
+    ; /* end */
+#endif
+}

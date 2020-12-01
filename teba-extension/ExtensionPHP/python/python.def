@@ -1,0 +1,4 @@
+CT_EIF   /elif\b/
+RANGE    /range\b/
+IN       /in\b/
+CO       /:/

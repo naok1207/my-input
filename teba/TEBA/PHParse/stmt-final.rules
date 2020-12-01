@@ -1,0 +1,161 @@
+# 
+# Copyright (c) 2009-2020 The TEBA Project. All rights reserved.
+# 
+# Redistribution and use in source, with or without modification, are
+# permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+# 
+# Author: Atsuhi Yoshida
+
+# statements
+
+{ $x:_B_S } => { $x:B_ST }
+{ $x:_E_S } => { $x:E_ST }
+
+# function definitions
+  ## for anonymous funcitons
+#{ $bf:B_F $f:RE_F $sp:SP $pl:P_L } => { $bf $f $sp $pl '':_ARG }
+
+## # interface elements of function definition
+{ $:B_P $f:RE_F $sp:SP $:B_P $#1:B_FC $call:ANYEXPR $#1:E_FC $:E_P $:E_P}
+=> { ''#2:B_FD ''#1:B_FH $f $sp $call ''#1:E_FH ''#2:E_FD}
+
+## # return types
+{ $efh:E_FH $efd:E_FD $sp:SP $#1:_B_TYPE '(?>':X $t:ANYEXPR $#1:_E_TYPE ')':X }
+=> { $sp $t $efh $efd }
+
+## # attributes
+{ $bp#1:B_P $a:RE_PAT $sp:SP $bfd#2:B_FD $h:ANYEXPR $efd#2:E_FD $ep#1:E_P }
+=>> { $bfd $bp $a $sp $h $ep $efd }
+
+## # body
+{ $efd:E_FD $sp:SP $bs#1:B_ST '(?>':X $st:ANY $es#1:E_ST ')':X }
+=> { $sp $bs $st $es $efd }
+
+
+# functions which return references
+#{ $f:RE_F $sp:SP $#1:B_P $op:OP/&/ $sp2:SP
+#  $:B_P $name:ID_C $:E_P $sp3:SP $pl:P_L '(?>':X $args:ANY $#1:E_P ')':X }
+#=> { ''#1:B_F $f $sp $op $sp2 $name $sp3 $pl '':_ARG $args ''#1:_E_F }
+
+#{ $f:RE_F $sp:SP $#1:B_P $:B_FC
+#  $:B_P $name:ID_C $:E_P $sp2:SP $pl:P_L '(?>':X $args:ANY $:E_FC $#1:E_P ')':X }
+#=> { ''#1:B_F $f $sp $name $sp2 $pl '':_ARG $args ''#1:_E_F }
+
+#{ $e:_E_F [type: $:SP $:OP/:/ $:SP $:B_P $:/ID_(TP|C)/ $:E_P ] }
+#=> { $type $e }
+
+
+#  ## parse arguments
+#{ $a:_ARG '(?>':X $v:ANYEXPR $t:/CA|P_R/ ')':X }
+#=>> { ''#1:_B_ARG $v ''#1:_E_ARG $t $a }
+#{ $:_ARG } => {}
+
+#  ## normalizing [BE]_ARG
+#{ $b:_B_ARG $sp:SP } => { $sp $b:B_ARG }
+#{ $sp:SP $b:_E_ARG} => { $b:E_ARG $sp }
+#{ $:B_ARG $:E_ARG } => {}
+
+# type check for PHP7
+{ $e:_E_F $[type: $:SP $:OP/:/ $:SP $:ID_TP $] }
+=> { $type $e }
+
+{ $f:_E_F $sp:SP $b#1:B_ST '(?>':X $body:ANY $e#1:E_ST ')':X }
+=>> { $sp $b:B_ST $body $e:E_ST $f:E_F }
+
+
+# class
+
+{ $f:RE_CL } => { ''#1:B_CL $f ''#1:_E_CL }
+
+# ## Skip a head; Anonymous class does not has a head.
+{ $f:_E_CL $sp:SP $b#1:B_P '(?>':X $head:ANY $e#1:E_P ')':X }
+=> { $sp $head $f }
+
+# ## extends or implements
+{ $f:_E_CL $sp1:SP $ex:RE_EX $sp2:SP $:B_P $c:ID_C $:E_P }
+=> { $sp1 $ex $sp2 $c $f }
+
+# ## body
+{ $f:_E_CL $sp:SP $b#1:B_ST '(?>':X $body:ANY $e#1:E_ST ')':X }
+=> { $sp $body $f:E_CL }
+
+# ## anonymous class is also an expression.
+{ [cl: $new:OP/new/ $sp:SP $b#1:B_CL '(?>':X $body:ANY $e#1:E_CL ')':X ]}
+=> { ''#1:B_P $cl ''#1:E_P }
+
+# method
+{ $a:RE_PAT $sp:SP $b:B_F } =>> { $b $a $sp }
+
+# namespace
+
+# ## for the case "namespcae N;"
+{ $f:RE_NA $sp1:SP $b#1:B_ST '(?>':X $head:ANY $e#1:E_ST ')':X }
+=> { $f $sp1 $head }
+
+# ## for the case "namespcae N {}"
+{ $f:RE_NA $sp1:SP $b#1:B_P '(?>':X $head:ANYEXPR $e#1:E_P ')':X }
+=> { ''#1:B_NA $f $sp1 $b $head $e ''#1:_E_NA }
+
+# ## for the case "namespcae N;"
+{ $f:_E_NA $sp:SP $sc:SC }=> { $sp $sc $f:E_NA }
+
+# ## for the case "namespcae N {}"
+{ $f:_E_NA $sp:SP $b#1:B_ST '(?>':X $body:ANY $e#1:E_ST ')':X }
+=> { $sp $body $f:E_NA }
+
+# use
+
+# use keywords in closure definition and remove [BE]_P outside.
+{ $use:RE_USE $sp:SP $#1:B_P
+  $pl#2:P_L '(?>':X $v:ANYEXPR $pr#2:P_R ')':X $#1:E_P }
+=> { $#1:B_USE $use $sp $pl $v $pr $#1:E_USE }
+
+# other use keywords:
+
+# ## use (function|const|public|...)*
+{ [head: $f:RE_USE $:SP [: [: $:RE_F | $:RE_PAT ] $:SP ]* ] }
+=> { ''#1:B_USE $head ''#1:_E_USE }
+
+# ## _E_USE expr ,
+{ $m:_E_USE [expr: $#1:B_P '(?>':X $:ANYEXPR $#1:E_P ')':X
+  $:SP [: $:CA $:SP ]? ] }
+=>> { $expr $m }
+
+## a _E_USE \ => B_P a \ _E_USE E_P
+{ [a: $#1:B_P '(?>':X $:ANYEXPR $#1:E_P ')':X $:SP ]
+  $m:_E_USE [path: $:OP/\\\\/ $:SP ] }
+=> { ''#1:B_P $a $path $m ''#1:E_P }
+
+# ## _E_USE B_ST {b, c, d} E_ST => B_P a B_P {b, c, d} E_P E_P _E_USE
+{ $m:_E_USE $[: $ep:E_P ]?
+    $:B_ST [bcd: $#2:C_L '(?>':X $:ANY $#2:C_R ')':X  ] $:E_ST }
+=> { ''#2:B_P $bcd ''#2:E_P $ep $m }
+
+# ## _E_USE (B_ST ... E_ST)? SC E_ST => ... SC E_USE
+{ $m:_E_USE $sp:SP $:B_ST [tail: $#1:B_P '(?>':X $:ANYEXPR $#1:E_P ')':X
+  $:SP ]? $sc:SC $:E_ST }
+=> { $sp $tail $sc $m:E_USE }
+
+# ## the case of 'function ($arg1) use ($ref1, $ref2) { ... }'
+{ $m:_E_USE [ref: $:SP $#1:P_L '(?>':X $:ANYEXPR $#1:P_R ')':X ] }
+=> { $ref $m }
+
+# unescape use keyword
+{ $u:_E_USE } => {$u:E_USE }

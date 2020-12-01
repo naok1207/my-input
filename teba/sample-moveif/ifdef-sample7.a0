@@ -1,0 +1,53 @@
+
+#if A
+# if Z
+            if (S
+                     && COND1
+                    )
+              {
+              }
+            else
+              {
+              }
+# else
+            if (S
+                     && COND2
+                    )
+              {
+              }
+            else
+              {
+              }
+# endif
+#else
+              {
+              }
+#endif
+
+
+#if B
+#if X
+if (c) {
+ } 
+else
+ if (
+x1
+	    )
+
+  {
+  }
+#else
+if (c) {
+ } 
+else
+ if (
+x2
+	    )
+
+  {
+  }
+#endif
+#else
+if (c) {
+ } 
+#endif

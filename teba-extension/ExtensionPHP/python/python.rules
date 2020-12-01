@@ -1,0 +1,79 @@
+# if 
+{ $:CT_IF $:SP
+  $[cond: $[: $:B_P $:ANY $:E_P $]+ $] $:SP
+  $:CO}
+  => { 'Python':LANG 'IF':MODEL '':B_COND $cond '':E_COND}
+  
+{ $:CT_IF $:SP
+  $[: $:P_L $:SP $]
+  $[cond: $[: $:B_P $:ANY $:E_P $]+ $]
+  $[: $:SP $:P_R $] $:SP
+  $:CO}
+  => { 'Python':LANG 'IF':MODEL '':B_COND $cond '':E_COND}
+
+
+# elif 
+{ $:CT_EIF/elif/ $:SP
+  $[cond: $[: $:B_P $:ANY $:E_P $]+ $] $:SP
+  $:CO}
+  => { 'Python':LANG 'ELSEIF':MODEL '':B_COND $cond '':E_COND}
+
+{ $:CT_EIF/elif/ $:SP
+  $[: $:P_L $:SP $]
+  $[cond: $[: $:B_P $:ANY $:E_P $]+ $]
+  $[: $:SP $:P_R $] $:SP
+  $:CO}
+  => { 'Python':LANG 'ELSEIF':MODEL '':B_COND $cond '':E_COND}
+
+# else 
+{ $:CT_EL $:SP $:CO}
+  => { 'Python':LANG 'ELSE':MODEL }
+
+
+# while 
+{ $:CT_BE/while/ $:SP
+  $[cond: $[: $:B_P $:ANY $:E_P $]+ $] $:SP
+  $:CO}
+  => { 'Python':LANG 'WHILE':MODEL '':B_COND $cond '':E_COND}
+
+{ $:CT_BE/while/ $:SP
+  $[: $:P_L $:SP $]
+  $[cond: $[: $:B_P $:ANY $:E_P $]+ $]
+  $[: $:SP $:P_R $] $:SP
+  $:CO}
+  => { 'Python':LANG 'WHILE':MODEL '':B_COND $cond '':E_COND}
+
+# for
+
+# range(ini,end)
+{ $:CT_BE/for/ $:SP
+  $#1:B_P $var:ID_C $#1:E_P $:SP
+  $:IN $:SP
+  $:RANGE
+  $#2:B_P $:P_L $:SP
+  $#3:B_P $ini:ANY $#3:E_P $:SP
+  $:CA $:SP
+  $#4:B_P $end:ANY $#4:E_P $:SP
+  $:P_R $#2:E_P $:SP
+  $:CO}
+  => { 'Python':LANG 'FOR':MODEL $var:VAR '':B_INI $ini '':E_INI '':B_END $end '':E_END 'False':END_INCLUDE}
+
+# range(end)
+{ $:CT_BE/for/ $:SP
+  $#1:B_P $var:ID_C $#1:E_P $:SP
+  $:IN $:SP
+  $:RANGE
+  $#2:B_P $:P_L $:SP
+  $#3:B_P $end:ANY $#3:E_P $:SP
+  $:P_R $#2:E_P $:SP
+  $:CO}
+  => { 'Python':LANG 'FOR':MODEL $var:VAR '':B:INI '0':INI '':E_INI '':B_END $end '':E_END 'False':END_INCLUDE}
+
+
+# foreach 
+{ $:CT_BE/for/ $sp:SP
+  $#1:B_P $var:ID_C $#1:E_P $:SP
+  $:IN $:SP
+  $#2:B_P $array:ID_C $#2:E_P $:SP
+  $:CO}
+  => { 'Python':LANG 'FOREACH':MODEL $var:VAR $array:ARRAY }

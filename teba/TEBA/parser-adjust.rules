@@ -1,0 +1,96 @@
+# 
+# Copyright (c) 2009-2020 The TEBA Project. All rights reserved.
+# 
+# Redistribution and use in source, with or without modification, are
+# permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+# 
+# Author: Atsuhi Yoshida
+
+##### The rules for statements in macro arguments #####
+# The definitions of cpy in lib/strftime.c and PRINT_FLOTTYPE in src/od.c.
+
+{ $b1#1:B_P $name:/ID_(?:VF|MC)/ $e1#1:E_P $sp0:SP
+  $b2:B_P '(?>':X $pl#p:P_L $sp:SP $any:ANY $pr#p:P_R ')':X $e2:E_P  }
+=>> { ''#1:B_P ''#f:B_FR $b1 $name $e1 $sp0 $pl $sp
+     '':_X $any '':_Y $pr ''#f:E_FR ''#1:E_P }
+
+@:NO_MATCH:END_XY:
+
+{ $x:_X '(?>':X $[arg: $[: $#1:B_P $:ANYEXPR $#1:E_P $| $:/ID_TP|ATTR/
+  $| $#2:/B_(?:SCT|UN|EM)/ $:ANY $#2:/E_(?:SCT|UN|EM)/ $] $:SP $]+ ')':X
+  $c:CA $sp2:SP }
+=>> { $arg $c $sp2 $x }
+
+{ $c:CA $sp1:SP '(?>':X $b#1:B_P $any:ANYEXPR $e#1:E_P ')':X $sp2:SP $y:_Y }
+=>> { $y $c $sp1 $b $any $e $sp2 }
+
+{ $:_X $b:B_ST } => { $b }
+{ $e:E_ST $sp:SP $:_Y } => { $e $sp }
+{ $:B_ST $:_Y } => { }
+
+{ $:_X $[e: $#1:B_P $:ANYEXPR $#1:E_P $]? $sp:SP $:_Y }
+=> { $e $sp }
+
+{ $x:_X } => { $x:B_ST }
+{ $y:_Y } => { $y:E_ST }
+
+@:LABEL:END_XY:
+
+#### The rules for macro statements without semicolon termination.
+# Insert E_ST and B_ST if a function call followed a newline and
+# and another function call.
+# {
+# <B_ST> f()
+# g() <E_ST>
+# } => {
+# <B_ST> f() <E_ST>
+# <B_ST> g() <E_ST>
+# }
+# ex. coreutils-8.16/lib/siglist.h
+# This rule set may split a declaration into two, which has
+# a macro call in each line.
+
+# This rule is very slow.
+#{ $bs:B_ST $bp1#p1:B_P '(?>':X $bf1#f1:B_FR $call:ANY $ef1#f1:E_FR ')':X
+#  $ep1#p1:E_P $nl:SP_NL $sp:SP $bp2:B_P $bf2:B_FR}
+#=>> { $bs $bp1 $bf1 $call $ef1 $ep1 '':E_ST  $nl $sp '':B_ST $bp2 $bf2 }
+
+# This is the same rule with the above.
+{ $nl:SP_NL $sp:SP $bs:B_ST $bp#p:B_P
+ '(?>':X $bf#f:B_FR $call:ANY $ef#f:E_FR ')':X $ep#p:E_P }
+=> { $nl $sp $bs $bp $bf $call $ef $ep '':_BRK }
+
+@SPC => "(?:SP_[BC].*+\n)*+"
+{ $:_BRK $sp0:SPC $nl:SP_NL $sp:SP $bp#p:B_P
+  '(?>':X $bf#f:B_FR $call:ANY $ef#f:E_FR ')':X $ep#p:E_P }
+=>> { '':SC '':E_ST $sp0 $nl $sp '':B_ST $bp $bf $call $ef $ep '':_BRK }
+
+{ $:_BRK $e:E_ST } => { '':SC $e }
+{ $:_BRK } => {}
+
+# Don't skip the following. [BE]_ST may be introduced by the first rule set.
+@|BeginEnd->new()->conv|
+
+#### The rules for identifying declarations ####
+
+@_SUE_TOP => "B_(?:SCT|UN|EN)"
+@DECL_TOP => "(?:ID_TP|@_SUE_TOP).*+\n"
+{ $decl_b#1:B_ST $type:DECL_TOP $any:ANY $decl_e#1:E_ST }
+=>> { $decl_b:B_DE $type $any $decl_e:E_DE }

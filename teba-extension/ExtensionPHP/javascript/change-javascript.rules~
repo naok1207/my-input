@@ -1,0 +1,28 @@
+# IF_model
+{ '':LANG $:MODEL/IF/ $:B_COND $cond:ANY $:E_COND }
+=> { 'で書かれていました':MES '\n':SP_NL 'if':CT_IF '(':P_R $cond:COND ')':P_L '{':C_L '\n':SP_NL }
+
+# ELSEIF_model
+{ '':LANG $:MODEL/ELSEIF/ $:B_COND $cond:ANY $:E_COND }
+=> { 'で書かれていました':MES '\n':SP_NL 'else':CT_EL ' ':SP_B 'if':CT_IF '(':P_R $cond:COND ')':P_R '{':C_L '\n':SP_NL }
+
+# ELSE_model
+{ '':LANG $:MODEL/ELSE/ }
+=> { 'で書かれていました':MES '\n':SP_NL 'else':CT_EL '{':C_L '\n':SP_NL }
+
+# WHILE_model
+{ '':LANG $:MODEL/WHILE/ $:B_COND $cond:ANY $:E_COND }
+=> { 'で書かれていました':MES '\n':SP_NL 'while':CT_BE '(':P_R $cond:COND ')':P_L '{':C_L '\n':SP_NL }
+
+# FOR_model(end_NOT_include)
+{ '':LANG $:MODEL/FOR/ $var:VAR $:B_INI $ini:ANY $:E_INI $:B_END $end:ANY $:E_END $:END_INCLUDE/False/ }
+  => { 'で書かれていました':MES '\n':SP_NL 'for':CT_BE '(':P_L $var:ID_C '=':OP $ini:INI ';':SC $var:ID_C '<':OP $end:END ';':SC $var:ID_C '++':OP ')':P_R '{':C_L '\n':SP_NL}
+
+# FOR_model(end_include)
+{ '':LANG $:MODEL/FOR/ $var:VAR $:B_INI $ini:ANY $:E_INI $:B_END $end:ANY $:E_END $:END_INCLUDE/True/ }
+   => { 'で書かれていました':MES '\n':SP_NL 'for':CT_BE '(':P_L $var:ID_C '=':OP $ini:INI ';':SC $var:ID_C '<=':OP $end:END ';':SC $var:ID_C '++':OP ')':P_R '{':C_L '\n':SP_NL}
+
+# FOREACH_model
+{ '':LANG $:MODEL/FOREACH/ $var:VAR $array:ARRAY }
+ => { 'で書かれていました':MES '\n':SP_NL 'for':CT_BE '(':P_L' $var:ID_C 'of':OF $array:ID_C )':P_R '{':C_L '\n':SP_NL }
+

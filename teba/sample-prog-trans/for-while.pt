@@ -1,0 +1,14 @@
+// Program Rewriting: for to while
+% before
+
+for ( ${init:EXPR} ; ${cond:EXPR} ; ${succ:EXPR} )
+  ${stmt:STMT}
+
+% after
+
+${init};
+while (${cond}) {
+  ${stmt}
+  ${succ} ;
+}
+% end

@@ -1,0 +1,71 @@
+# 
+# Copyright (c) 2009-2020 The TEBA Project. All rights reserved.
+# 
+# Redistribution and use in source, with or without modification, are
+# permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+# 
+# Author: Atsuhi Yoshida
+
+@_STMT => "(?:@_STMT|_[BE]_LB.*+\n)"
+
+##### identify labeled statements.
+
+{  $bl#1:_B_LB '(?>':X $label:ANY $el#1:_E_LB ')':X $sp:SP $bs#s:B_ST
+   '(?>':X $body:ANY $es#s:E_ST ')':X  }
+=>> { ''#1:B_ST $bl:B_LB $label $el:E_LB $sp $bs $body $es ''#1:E_ST }
+
+#####  The rules for eating the bodies of conditional statements  #####
+## (exclude if-statement)
+
+@XANYSTMT => "(?:@_SP|@_STMT|(?:_[BE]_(?:CT|IF).*+\n)|_EL.*+\n)*?"
+# /_[BE]_(CT|IF)/ is unable to be abbreviated to /_.*/
+# because @_STMT includes @_EXPR, which include _[BE]_X.
+
+{ '(?>':X $#1:_B_CT $ctrl:CT_BE $head:ANYCOND $#1:_E_CT ')':X
+  $sp:SP '(?>':X $be#2:B_ST $stmt:XANYSTMT $en#2:E_ST ')':X }
+=>> { ''#1:B_ST $ctrl $head $sp $be $stmt $en ''#1:E_ST }
+
+#####  The rules for eating else-parts of if-statements.  ####
+# _B_IF if (cond) _E_IF <stmt> else => _B_IF if (cond) <stmt> else _E_IF
+# _B_IF ... _E_IF <stmt> => B_ST ... <stmt> E_ST
+
+{ '(?>':X $bi#1:_B_IF $if:CT_IF $sp1:SP
+  $pl#p:P_L $cond:ANYCOND $pr#p:P_R ')':X $ei#1:_E_IF
+  $sp2:SP '(?>':X $[: $bs#2:B_ST $stmt:XANYSTMT $es#2:E_ST
+  $sp3:SP $]? ')':X $else:CT_EL }
+=>> { $bi $if $sp1 $pl $cond $pr $sp2 $bs $stmt $es $sp3 $else $ei }
+# This rule must be applied repeatedly before the following rule.
+# '$]?' after $sp3 is a trick to avoid to remain _[BE]_IF.
+# coreutils-8.16/lib/vasnprintf.c contains unbalanced if-else by preprocess.
+
+{ $bi#1:_B_IF '(?>':X $any:XANYSTMT $ei#1:_E_IF ')':X $sp:SP
+  $bs#2:B_ST '(?>':X $stmt:XANYSTMT $es#2:E_ST ')':X }
+=> { $bi:B_ST $any '':_EL $sp $bs $stmt $es $ei:E_ST}
+# if $any and $stmt are ANY, it does not work for vasnprintf.c.
+
+# add "_EL" for marking valid else. All 'else's which are not followed
+# by _EL is independent statement, which appear because of preprocess.
+
+##### The rules for eating bodies and conditions for do-while statements.  #####
+
+{ $do:CT_DO $sp1:SP '(?>':X $be#1:B_ST $stmt:XANYSTMT $en#1:E_ST ')':X
+  $sp2:SP $bc#2:B_ST '(?>':X $while:CT_BE/while/ $cond:ANYEXPR 
+  $be2#3:B_ST ')':X $[: $semi:SC $]? $en2#3:E_ST  $ec#2:E_ST }
+=> { ''#1:B_ST $do $sp1 $be $stmt $en $sp2 $while $cond $semi ''#1:E_ST }

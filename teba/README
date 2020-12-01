@@ -1,0 +1,192 @@
+TEBA: A parser for un-preprocessed code fragments of the C language
+
+* Preparation to use:
+  - add the directory "bin" to PATH.
+
+
+* How to use:
+
+ - Programs:
+
+   o cparse.pl : the parser that converts a program file or
+       a program fragments into an attributed token sequence.
+
+   o join-token.pl : a reconstruction tool of the original text 
+       from a token sequence.
+
+   o rewrite_token.pl : a program transformation tool based on token sequence
+       patterns. It reads an attribute token sequence and translates it
+       according to the specified patterns by the argument.
+
+  o rewrite.pl : an experimental tool of program pattern transformation.
+       See the samples for demonstration.
+
+  o id_unify.pl : an unification tool to unify pair ids in two sequences.
+      It takes two files containing sequences, and generates unified sequences
+      in files *.unified for each files. It is useful when you want
+      to see the differences between two sequences in which pair-ids
+      may be assigned differently.
+
+  o preg.pl : a pattern search tool for programs.
+      See the samples for demonstration.
+
+  o rev_macro.pl : a reverse macro expansion tool that replace the parts
+      that matches the replacement of macro definitions with macro calls.
+
+  o ext_macro.pl : a forward macro expansion tool that replace macro calls
+      with the replacement of macro definitions.
+
+  o move_ifdef.pl : an alignment tool for  branch directives, which moves
+      the branch directives not on the borders of statements,
+      function definitions, declarations to the borders.
+
+- Usage
+
+  o Basic usage
+
+The basic style of the use is to connect tools by pipes.
+
+  cparse.pl hoge.c | join-token.pl
+
+cparse.pl converts hoge.c to an attributed token sequence, and
+join-token.pl regenerates the original text from the sequence.
+
+The output of cparse.pl is a text, and you can see it by text viewers
+though it may be difficult to understand. By using join-token.pl with
+the option "-d" for the display mode as following, you can see how 
+virtual tokens are inserted in a human readable way.
+
+  cparse.pl hoge.c | join-token.pl -d | less -R
+
+The display mode uses ANSI escape sequences. The text views need to 
+support them properly, i.e. "-R" option of "less".
+
+
+  o Pattern Search
+
+preg.pl searches parts matching patterns in C programs. Patterns are
+texts of program fragments, which can contains predefined pattern
+variables: ${:VAR}, ${:FNAME}, ${:TYPE}, ${:EXPR}, ${:STMT}, {$:DECL},
+${:DIRE} and ${ARGLIST}.
+
+Region specifier, ${%begin} and ${%end}, can be used for simplifying
+the queries. For example, we can find the end of function definitions
+by a pattern:
+
+  ${:TYPE} ${:FNAME}(${:ARGLIST})
+  {
+  ${%begin}
+  }
+  ${%end}
+
+The tool parses this pattern and build a queries. Then the tool
+deletes the tokens before ${%before} and after ${%end}.
+As a result, the query consists of a virtual token E_FUNC and a curly
+brace, and matches only the end of function definitions.
+
+The patterns can also contains some meta expressions:
+
+  * alternations:
+      $[: <alternative1> $| <alternative2> $] 
+      Ex. $[: return ${:EXPR}; $| exit(${:EXPR}); $]
+    
+  * repeats:
+     $[: elements $]+<quantifier>
+      <quantifier> ::= *|+|?|*?|+?|?  (same with perl's quantifier)
+     Ex. $[: ${:STMT}  $]*
+    
+  * concatenation:
+     <token1> $##+ <token2>
+     (The concatenation of <token1> and <tokens2> match an identifier.)
+     Ex. prefix_ $## ${x:ID_VAR}
+    
+  * stringification:
+     $#+ <token>
+     (<token> matches the contents of a string literal.)
+     Ex. $# ${name:ID_VAR}
+
+preg.pl parses C programs and output the matched regions. You can
+specify the contexts of matched regions. Typical usage is:
+
+   preg.pl -v -b2 'printf(${:EXPR});' *.c | less -R
+
+The options "-v" is for displaying the regions with colored marks,
+and "-b2" means the contexts are the blocks at two blocks up from
+the matched regions.
+
+There are some examples in sample-preg.
+
+
+  o macro expansion tools
+
+The reverse macro expansion tool, rev_macro.pl,  replaces the parts matching
+the replacements of specified macro definitions with macro calls.
+For example, invoke the tool as follows:
+
+  rev_macro.pl -m '#define ADD(a,b) ((a)+(b))' hoge.c
+
+The expression "x + y" in hoge.c is to be replaced with "ADD(x,y)".
+The tool automatically removes extra parentheses in the replacements.
+
+The forward macro expansion tool, ext_macro.pl, works reversely, 
+and it's a symbolic link to rev_macro.pl. For optimization,
+the tools contains the generated patterns. The original sources are
+available in the directory macro_build.
+
+A demonstration is available in the directory sample-macro.
+Invoke as the follow:
+
+  make clean; make all
+
+
+  o an alignment tool for branch directives
+
+The tool, move_ifdef.pl, moves the branch directives in the border
+of statements, declarations and function definitions to the border.
+There are three options for target directives: (a) all, (b) branch
+directives with else-parts and (c) user specified directives.
+For options (c), a marker "/* TEBA:mark */" is placed at the end
+of the line of a target directive.
+
+The simple usage is:
+
+  move_ifdef.pl -acC hoge.c
+
+You can find some demonstrations in the directory sample-moveif.
+Invoke as the follow:
+
+  make clean; make all
+
+
+  o Program transformation
+
+For rewriting programs, add rewrite.pl between the parser and the 
+reconstruction tool.
+
+    cparse.pl hoge.c | rewrite.pl -p pattern.pt | join-token.pl
+
+Where pattern.pt is a pattern file. You can find he examples of pattern files
+in the directory "sample-prog-trans". In the directory, by invoke "make",
+you can see small demonstrations of program transformation.
+
+rewrite.pl has three options, "-s", "-r", and "-e".
+
+The option, "-s", is for preserving all of comments and white spaces.
+Because the tool does not delete any of them, the readability becomes worse.
+Preserving spaces can specify in pattern files by the directive beginning "%s".
+In the sample pattern files, "iff.pt" contains the directive "%s".
+
+The option "-r" is for applying the rule recursively. the rule is applied
+repeatedly until no rewriting occur. This option can be also specified
+"%r" in the pattern. You can see an example in the sample pattern file,
+"extract-decl.pt".
+
+The option "-e" is for rewriting only expressions. Without "-e", all
+patterns are parsed as statements, declarations, and/or function 
+definitions.
+
+Author:
+Atsushi Yoshida, atsu[at]nanzan-u.ac.jp
+Department of Software Engineering
+Faculty of Science and Engineering
+Nanzan University

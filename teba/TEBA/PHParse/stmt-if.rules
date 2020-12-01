@@ -1,0 +1,112 @@
+# 
+# Copyright (c) 2009-2020 The TEBA Project. All rights reserved.
+# 
+# Redistribution and use in source, with or without modification, are
+# permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+# 
+# Author: Atsuhi Yoshida
+
+
+#goto label
+{ $:B_P $label:ID_C $:E_P $sp1:SP $co:OP/:/ $sp2:SP $bs:_B_S }
+=> { ''#1:_B_LC $label:ID_L $sp1 $co $sp2 ''#1:_E_LC $bs }
+
+# all types of labels
+{ $el:_E_LC $sp:SP $bs#1:_B_S '(?>':X $any:ANY $es#1:_E_S  ')':X }
+=> { $sp $bs:B_ST $any $es:E_ST $el:_E_1LC }
+
+{ $b#1:_B_LC '(?>':X $any:ANY $e#1:_E_1LC  ')':X }
+=> { $b:_B_S $any $e:_E_S }
+
+# loop statements
+{ $c:_E_C $sp:SP $bs#2:_B_S '(?>':X $body:ANY $es#2:_E_S ')':X }
+=> { $sp $bs:B_ST $body $es:E_ST $c:_E_1C }
+
+{ $b#1:_B_C '(?>':X $stmt:ANY $e#1:_E_1C ')':X }
+=> { $b:_B_S $stmt $e:_E_S }
+
+{ $d:_E_0DO $sp:SP $bs#2:_B_S '(?>':X $body:ANY $es#2:_E_S ')':X }
+=> { $sp $bs:B_ST $body $es:E_ST $d:_E_1DO }
+
+{ $d:_E_1DO $sp:SP $bs#2:_B_S $c:CT_BE '(?>':X $body:ANY $es#2:_E_S ')':X }
+=> { $sp $c $body $d:_E_2DO }
+
+{ $#1:B_ST $sc:SC $#1:E_ST $d:_E_2DO } => { $sc $d:_E_3DO }
+
+{ $b#1:_B_0DO '(?>':X $body:ANY $e#1:_E_3DO ')':X }
+=> { ''#1:_B_S $body ''#1:_E_S }
+
+# try-catch
+
+## try block
+{ $d:_E_0TRY $sp:SP $bs#2:_B_S '(?>':X $body:ANY $es#2:_E_S ')':X }
+=> { $sp $bs:B_ST $body $es:E_ST $d:_E_1TRY }
+
+## catch block
+{ $d:_E_1TRY $sp:SP $#1:_B_S $c:CT_BE/catch/ '(?>':X $body:ANY $#1:_E_S ')':X }
+=>> { $sp $c $body $d:_E_1TRY }
+
+## finally block
+{ $d:_E_1TRY $sp:SP $#1:_B_0TRY $f:CT_TRY/finally/ '(?>':X $body:ANY $#1:_E_1TRY ')':X }
+=> { $sp $f $body $d:_E_1TRY }
+
+{ $#1:_B_0TRY '(?>':X $stmt:ANY $#1:_E_1TRY ')':X }
+=> { ''#1:_B_S $stmt ''#1:_E_S }
+
+### ====
+# if statements
+{ $c:_E_0IF $sp:SP $bs#2:_B_S '(?>':X $body:ANY $es#2:_E_S ')':X }
+=> { $sp $bs:B_ST $body $es:E_ST $c:_E_1IF } 
+
+# The following will be applyed later for accepting nesting elseif correctly.
+#{ $c:_E_1IF $sp:SP $elif:CT_EIF } => { $sp $elif $c:_E_2IF }
+
+{ $c:_E_2IF  $sp:SP $:B_P
+   $[cond: $:P_L $#1:B_P '(?>':X $:ANY $#1:E_P ')':X $:P_R $] $:E_P }
+ => { $sp $cond $c }
+
+{ $c:_E_2IF $sp:SP $bs#2:_B_S '(?>':X $body:ANY $es#2:_E_S ')':X }
+=> { $sp $bs:B_ST $body $es:E_ST $c:_E_1IF }
+
+# Yes, apply it here.
+{ $c:_E_1IF $sp:SP $elif:CT_EIF } => { $sp $elif $c:_E_2IF }
+
+{ $c:/_E_[12]IF/ $sp:SP $else:CT_EL } => { $sp $else $c:_E_3IF }
+
+{ $c:_E_3IF $sp:SP $bs#2:_B_S '(?>':X $body:ANY $es#2:_E_S ')':X }
+=> { $sp $bs:B_ST $body $es:E_ST $c:_E_4IF }
+ 
+{ $b#1:_B_0IF '(?>':X $stmt:ANY $e#1:/_E_[14]IF/ ')':X }
+=> { $b:_B_S $stmt $e:_E_S }
+
+# if (e1) s1 elsif (e2) s2 else s2
+# <_B_IF>if (e1)<_E_0IF> s1 elsif (e2) s2 else s2
+# <_B_IF>if (e1) s1 <_E_1IF> elsif  (e2) s2 else s2
+# <_B_IF>if (e1) s1 elsif <_E_2IF> (e2) s2 else s2
+# <_B_IF>if (e1) s1 elsif (e2) s2 <_E_1IF> else  s2
+# <_B_IF>if (e1) s1 elsif (e2) s2 else <_E_IF3> s2
+# <_B_IF>if (e1) s1 elsif (e2) s2 else s2 <_E_IF4>
+# <B_ST>if (e1) s1 elsif (e2) s2 else  s2 <E_ST> 
+# 
+
+# <_B_IF> if (e1) <_E_0IF> s1 ...
+# <_B_IF> if (e1) s1 <_E_1IF> ...
+# if not rewrting markers to 2IF or IF3
+# <B_ST> if (e1) s1 <E_ST> ...

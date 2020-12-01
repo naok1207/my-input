@@ -1,0 +1,16 @@
+%before
+
+if (${cond:EXPR}) {
+  ${stmt1:STMT}
+} else {
+  ${stmt2:STMT}
+  $[exit: exit(${:EXPR}); $| return ${:EXPR}; $]
+}
+
+%after
+
+if (!${cond}) {
+  ${stmt2}
+  $[exit]
+}
+${stmt1}

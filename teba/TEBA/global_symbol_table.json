@@ -1,0 +1,13 @@
+{
+    "printf": "int",
+    "fprintf": "int",
+    "scanf": "int",
+    "fscanf": "int",
+    "malloc": "void.*",
+    "stderr": "FILE.*",
+
+    "type:size_t": "unsigned.int",
+
+    "NULL": "void.*",
+    "EOF": "int"
+}

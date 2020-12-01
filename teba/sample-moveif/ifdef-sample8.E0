@@ -1,0 +1,21 @@
+
+#ifdef X
+if (c) {
+  f();
+#ifdef Y
+ }
+{
+#endif
+  g();
+}
+#else
+  {
+  f();
+#ifdef Y
+ }
+{
+#endif
+  g();
+}
+#endif
+

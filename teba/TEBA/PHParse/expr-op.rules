@@ -1,0 +1,326 @@
+# 
+# Copyright (c) 2009-2020 The TEBA Project. All rights reserved.
+# 
+# Redistribution and use in source, with or without modification, are
+# permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+# 
+# Author: Atsuhi Yoshida
+
+
+# Expression rules generated from gen_expr_rules.pl.
+
+
+@OP01 => "OP\s+<\$>\n"
+{ $op:OP01 $sp:SP $bx#1:_B_X '(?>':X $any:ANYEXPR $ex#1:_E_X ')':X }
+ =>> { ''#1:_B_X $op $sp $bx:B_P $any $ex:E_P ''#1:_E_X }
+
+
+@OP02 => "OP\s+<(?:clone|new)>\n"
+{ $op:OP02 $sp:SP $bx#1:_B_X '(?>':X $any:ANYEXPR $ex#1:_E_X ')':X }
+ =>> { ''#1:_B_X $op $sp $bx:B_P $any $ex:E_P ''#1:_E_X }
+
+
+@OP03 => "RE_PAT\s+<.*?>\n"
+{ $op:OP03 $sp:SP $bx#1:_B_X '(?>':X $any:ANYEXPR $ex#1:_E_X ')':X }
+ =>> { ''#1:_B_X $op $sp $bx:B_P $any $ex:E_P ''#1:_E_X }
+
+
+@OP04 => "ID_TP\s+<.*?>\n"
+{ $op:OP04 $sp:SP $bx#1:_B_X '(?>':X $any:ANYEXPR $ex#1:_E_X ')':X }
+ =>> { ''#1:_B_X $op $sp $bx:B_P $any $ex:E_P ''#1:_E_X }
+
+
+@OP05 => "RE_F\s+<.*?>\n"
+{ $op:OP05 $sp:SP $bx#1:_B_X '(?>':X $any:ANYEXPR $ex#1:_E_X ')':X }
+ =>> { ''#1:_B_X $op $sp $bx:B_P $any $ex:E_P ''#1:_E_X }
+
+
+{ $:_X_AR $al#a:A_L $arg:ANYEXPR $ar#a:A_R }
+  =>> { ''#1:_B_OP06 $al $arg $ar ''#1:_E_OP06 }
+{ $bx#1:_B_X '(?>':X $any:ANYEXPR $ex#1:_E_X ')':X $sp:SP
+  $#m:_B_OP06 $any1:ANYEXPR $#m:_E_OP06 }
+  =>> { ''#1:_B_X $bx:B_P $any $ex:E_P $sp $any1 ''#1:_E_X }
+
+{ $x:_B_OP06 } => { $x:_B_X }
+{ $x:_E_OP06 } => { $x:_E_X }
+
+{ $b:OP/\.\.\./ $sp:SP $#m:_B_OP06 $any:ANYEXPR $#m:_E_OP06 }
+  =>> { ''#1:_B_X $b $sp ''#2:_B_X $any ''#2:_E_X ''#1:_E_X }
+
+
+# array initializer
+{ $b:/[AP]_L|CA/ $sp:SP $#m:_B_OP06 $any:ANYEXPR $#m:_E_OP06 }
+  =>> { $b $sp ''#1:_B_X $any ''#1:_E_X }
+{ $b:OP/=/ $sp:SP $#m:_B_OP06 $any:ANYEXPR $#m:_E_OP06 }
+  =>> { $b $sp ''#1:_B_X $any ''#1:_E_X }
+
+
+
+@OP07 => "OP\s+<(?:->|::)>\n"
+{ $op:OP07 $sp:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X }
+  =>> { ''#1:_B_OP07 $op $sp $bx:B_P $any $ex:E_P ''#1:_E_OP07 }
+
+{ $bx1#1:_B_X '(?>':X $any1:ANYEXPR $ex1#1:_E_X ')':X $sp1:SP
+  $#2:_B_OP07 $any2:ANYEXPR $#2:_E_OP07 }
+  =>> { ''#1:_B_X $bx1:B_P $any1 $ex1:E_P $sp1 $any2 ''#1:_E_X }
+
+
+@OP08 => "OP\s+<\*\*>\n"
+{ $ex:_E_X $sp:SP $op:OP08 } => { $ex ''#1:_B_OP08 $sp $op ''#1:_E_OP08 }
+{ $bx#1:_B_X '(?>':X $any:ANY $ex#1:_E_X ')':X $bop:_B_OP08 }
+  =>> { $bop $bx:B_P $any $ex:E_P }
+{ $bx1#1:_B_OP08 '(?>':X $any1:ANY $ex1#1:_E_OP08 ')':X $sp:SP
+  $bx2#2:_B_X '(?>':X $any2:ANY $ex2#2:_E_X ')':X }
+  =>> { ''#1:_B_X $any1 $sp $bx2:B_P $any2 $ex2:E_P ''#1:_E_X }
+
+
+@OP09 => "OP\s+<(?:\+\+|--|[~@])>\n"
+{ $op:OP09 $sp:SP $bx#1:_B_X '(?>':X $any:ANYEXPR $ex#1:_E_X ')':X }
+ =>> { ''#1:_B_X $op $sp $bx:B_P $any $ex:E_P ''#1:_E_X }
+
+
+{ $[cast: $#1:B_CST $:ANY $#1:E_CST $] $sp:SP
+  $bx#2:_B_X '(?>':X $any:ANYEXPR $ex#2:_E_X ')':X }
+  =>> { ''#1:_B_X $cast $sp $bx:B_P $any $ex:E_P ''#1:_E_X }
+
+
+@OP11 => "OP\s+<(?:\+\+|--)>\n"
+{  $bx#1:_B_X '(?>':X $any:ANYEXPR $ex#1:_E_X ')':X $sp:SP $op:OP11 }
+ =>> { ''#1:_B_X $bx:B_P $any $ex:E_P $sp $op ''#1:_E_X }
+
+
+@OP12 => "OP\s+<instanceof>\n"
+{ $ex:_E_X $sp:SP $op:OP12 } => { $ex ''#1:_B_OP12 $sp $op ''#1:_E_OP12 }
+{ $bx#1:_B_X '(?>':X $any:ANY $ex#1:_E_X ')':X $bop:_B_OP12 }
+  =>> { $bop $bx:B_P $any $ex:E_P }
+{ $bx1#1:_B_OP12 '(?>':X $any1:ANY $ex1#1:_E_OP12 ')':X $sp:SP
+  $bx2#2:_B_X '(?>':X $any2:ANY $ex2#2:_E_X ')':X }
+  =>> { ''#1:_B_X $any1 $sp $bx2:B_P $any2 $ex2:E_P ''#1:_E_X }
+
+
+@OP13 => "OP\s+<!>\n"
+{ $op:OP13 $sp:SP $bx#1:_B_X '(?>':X $any:ANYEXPR $ex#1:_E_X ')':X }
+ =>> { ''#1:_B_X $op $sp $bx:B_P $any $ex:E_P ''#1:_E_X }
+
+
+@OP14 => "OP\s+<[*\/%]>\n"
+{ $op:OP14 $sp:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X }
+  =>> { ''#1:_B_OP14 $op $sp $bx:B_P $any $ex:E_P ''#1:_E_OP14 }
+
+{ $bx1#1:_B_X '(?>':X $any1:ANYEXPR $ex1#1:_E_X ')':X $sp1:SP
+  $#2:_B_OP14 $any2:ANYEXPR $#2:_E_OP14 }
+  =>> { ''#1:_B_X $bx1:B_P $any1 $ex1:E_P $sp1 $any2 ''#1:_E_X }
+
+
+@OP15 => "OP\s+<[-+.]>\n"
+{ $op:OP15 $sp:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X }
+  =>> { ''#1:_B_OP15 $op $sp $bx:B_P $any $ex:E_P ''#1:_E_OP15 }
+
+{ $bx1#1:_B_X '(?>':X $any1:ANYEXPR $ex1#1:_E_X ')':X $sp1:SP
+  $#2:_B_OP15 $any2:ANYEXPR $#2:_E_OP15 }
+  =>> { ''#1:_B_X $bx1:B_P $any1 $ex1:E_P $sp1 $any2 ''#1:_E_X }
+
+{ $x:_B_OP15 } => { $x:_B_X }
+{ $x:_E_OP15 } => { $x:_E_X }
+
+
+@OP16 => "OP\s+<(?:<<|>>)>\n"
+{ $op:OP16 $sp:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X }
+  =>> { ''#1:_B_OP16 $op $sp $bx:B_P $any $ex:E_P ''#1:_E_OP16 }
+
+{ $bx1#1:_B_X '(?>':X $any1:ANYEXPR $ex1#1:_E_X ')':X $sp1:SP
+  $#2:_B_OP16 $any2:ANYEXPR $#2:_E_OP16 }
+  =>> { ''#1:_B_X $bx1:B_P $any1 $ex1:E_P $sp1 $any2 ''#1:_E_X }
+
+
+@OP17 => "OP\s+<(?:[<>]=?)>\n"
+{ $ex:_E_X $sp:SP $op:OP17 } => { $ex ''#1:_B_OP17 $sp $op ''#1:_E_OP17 }
+{ $bx#1:_B_X '(?>':X $any:ANY $ex#1:_E_X ')':X $bop:_B_OP17 }
+  =>> { $bop $bx:B_P $any $ex:E_P }
+{ $bx1#1:_B_OP17 '(?>':X $any1:ANY $ex1#1:_E_OP17 ')':X $sp:SP
+  $bx2#2:_B_X '(?>':X $any2:ANY $ex2#2:_E_X ')':X }
+  =>> { ''#1:_B_X $any1 $sp $bx2:B_P $any2 $ex2:E_P ''#1:_E_X }
+
+
+@OP18 => "OP\s+<(?:[!=]==?|<=?>)>\n"
+{ $ex:_E_X $sp:SP $op:OP18 } => { $ex ''#1:_B_OP18 $sp $op ''#1:_E_OP18 }
+{ $bx#1:_B_X '(?>':X $any:ANY $ex#1:_E_X ')':X $bop:_B_OP18 }
+  =>> { $bop $bx:B_P $any $ex:E_P }
+{ $bx1#1:_B_OP18 '(?>':X $any1:ANY $ex1#1:_E_OP18 ')':X $sp:SP
+  $bx2#2:_B_X '(?>':X $any2:ANY $ex2#2:_E_X ')':X }
+  =>> { ''#1:_B_X $any1 $sp $bx2:B_P $any2 $ex2:E_P ''#1:_E_X }
+
+
+@OP19 => "OP\s+<&>\n"
+{ $op:OP19 $sp:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X }
+  =>> { ''#1:_B_OP19 $op $sp $bx:B_P $any $ex:E_P ''#1:_E_OP19 }
+
+{ $bx1#1:_B_X '(?>':X $any1:ANYEXPR $ex1#1:_E_X ')':X $sp1:SP
+  $#2:_B_OP19 $any2:ANYEXPR $#2:_E_OP19 }
+  =>> { ''#1:_B_X $bx1:B_P $any1 $ex1:E_P $sp1 $any2 ''#1:_E_X }
+
+
+@OP20 => "OP\s+<\^>\n"
+{ $op:OP20 $sp:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X }
+  =>> { ''#1:_B_OP20 $op $sp $bx:B_P $any $ex:E_P ''#1:_E_OP20 }
+
+{ $bx1#1:_B_X '(?>':X $any1:ANYEXPR $ex1#1:_E_X ')':X $sp1:SP
+  $#2:_B_OP20 $any2:ANYEXPR $#2:_E_OP20 }
+  =>> { ''#1:_B_X $bx1:B_P $any1 $ex1:E_P $sp1 $any2 ''#1:_E_X }
+
+
+@OP21 => "OP\s+<\|>\n"
+{ $op:OP21 $sp:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X }
+  =>> { ''#1:_B_OP21 $op $sp $bx:B_P $any $ex:E_P ''#1:_E_OP21 }
+
+{ $bx1#1:_B_X '(?>':X $any1:ANYEXPR $ex1#1:_E_X ')':X $sp1:SP
+  $#2:_B_OP21 $any2:ANYEXPR $#2:_E_OP21 }
+  =>> { ''#1:_B_X $bx1:B_P $any1 $ex1:E_P $sp1 $any2 ''#1:_E_X }
+
+
+@OP22 => "OP\s+<&&>\n"
+{ $op:OP22 $sp:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X }
+  =>> { ''#1:_B_OP22 $op $sp $bx:B_P $any $ex:E_P ''#1:_E_OP22 }
+
+{ $bx1#1:_B_X '(?>':X $any1:ANYEXPR $ex1#1:_E_X ')':X $sp1:SP
+  $#2:_B_OP22 $any2:ANYEXPR $#2:_E_OP22 }
+  =>> { ''#1:_B_X $bx1:B_P $any1 $ex1:E_P $sp1 $any2 ''#1:_E_X }
+
+
+@OP23 => "OP\s+<\|\|>\n"
+{ $op:OP23 $sp:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X }
+  =>> { ''#1:_B_OP23 $op $sp $bx:B_P $any $ex:E_P ''#1:_E_OP23 }
+
+{ $bx1#1:_B_X '(?>':X $any1:ANYEXPR $ex1#1:_E_X ')':X $sp1:SP
+  $#2:_B_OP23 $any2:ANYEXPR $#2:_E_OP23 }
+  =>> { ''#1:_B_X $bx1:B_P $any1 $ex1:E_P $sp1 $any2 ''#1:_E_X }
+
+
+@OP24 => "OP\s+<\?\?>\n"
+{ $ex:_E_X $sp:SP $op:OP24 } => { $ex ''#1:_B_OP24 $sp $op ''#1:_E_OP24 }
+{ $bx#1:_B_X '(?>':X $any:ANY $ex#1:_E_X ')':X $bop:_B_OP24 }
+  =>> { $bop $bx:B_P $any $ex:E_P }
+{ $bx1#1:_B_OP24 '(?>':X $any1:ANY $ex1#1:_E_OP24 ')':X $sp:SP
+  $bx2#2:_B_X '(?>':X $any2:ANY $ex2#2:_E_X ')':X }
+  =>> { ''#1:_B_X $any1 $sp $bx2:B_P $any2 $ex2:E_P ''#1:_E_X }
+
+
+#  ? {expr} : => < ? (expr) : >
+
+{ $opl:OP/\?/ $sp1:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X $sp2:SP $opr:OP/:/ }
+=>> { ''#1:_B_OP25 $opl $sp1 $bx:B_P $any $ex:E_P $sp2 $opr ''#1:_E_OP25 }
+@:NO_MATCH:END_TRI:
+
+# {expr} < ? (expr) : > => < (expr) ? (expr) : >
+
+{ $bx1#1:_B_X '(?>':X $any1:ANYEXPR $ex1#1:_E_X ')':X $sp:SP
+  $bx2#2:_B_OP25 $any2:ANYEXPR $ex2#2:_E_OP25 }
+=>> { $bx2 $bx1:B_P $any1 $ex1:E_P $sp $any2 $ex2 }
+
+# < (expr) ? (expr) : > {expr} => { (expr) ? (expr) : (expr) }
+
+{ $#1:_B_OP25 '(?>':X $any1:ANYEXPR $#1:_E_OP25 ')':X $sp:SP
+  $bx2#2:_B_X $any2:ANYEXPR $ex2#2:_E_X }
+=>> {  ''#1:_B_X $any1 $sp $bx2:B_P $any2 $ex2:E_P ''#1:_E_X }
+
+@:LABEL:END_TRI:
+
+
+@OP26 => "OP\s+<(?:[-+\/.%&|^]|\*\*?|<<|>>|\?\?)?=>\n"
+{ $ex:_E_X $sp:SP $op:OP26 } => { $ex ''#1:_B_OP26 $sp $op ''#1:_E_OP26 }
+{ $bx#1:_B_X '(?>':X $any:ANY $ex#1:_E_X ')':X $bop:_B_OP26 }
+  =>> { $bop $bx:B_P $any $ex:E_P }
+{ $bx1#1:_B_OP26 '(?>':X $any1:ANY $ex1#1:_E_OP26 ')':X $sp:SP
+  $bx2#2:_B_X '(?>':X $any2:ANY $ex2#2:_E_X ')':X }
+  =>> { ''#1:_B_X $any1 $sp $bx2:B_P $any2 $ex2:E_P ''#1:_E_X }
+
+
+@OP27 => "OP\s+<and>\n"
+{ $op:OP27 $sp:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X }
+  =>> { ''#1:_B_OP27 $op $sp $bx:B_P $any $ex:E_P ''#1:_E_OP27 }
+
+{ $bx1#1:_B_X '(?>':X $any1:ANYEXPR $ex1#1:_E_X ')':X $sp1:SP
+  $#2:_B_OP27 $any2:ANYEXPR $#2:_E_OP27 }
+  =>> { ''#1:_B_X $bx1:B_P $any1 $ex1:E_P $sp1 $any2 ''#1:_E_X }
+
+
+@OP28 => "OP\s+<xor>\n"
+{ $op:OP28 $sp:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X }
+  =>> { ''#1:_B_OP28 $op $sp $bx:B_P $any $ex:E_P ''#1:_E_OP28 }
+
+{ $bx1#1:_B_X '(?>':X $any1:ANYEXPR $ex1#1:_E_X ')':X $sp1:SP
+  $#2:_B_OP28 $any2:ANYEXPR $#2:_E_OP28 }
+  =>> { ''#1:_B_X $bx1:B_P $any1 $ex1:E_P $sp1 $any2 ''#1:_E_X }
+
+
+@OP29 => "OP\s+<or>\n"
+{ $op:OP29 $sp:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X }
+  =>> { ''#1:_B_OP29 $op $sp $bx:B_P $any $ex:E_P ''#1:_E_OP29 }
+
+{ $bx1#1:_B_X '(?>':X $any1:ANYEXPR $ex1#1:_E_X ')':X $sp1:SP
+  $#2:_B_OP29 $any2:ANYEXPR $#2:_E_OP29 }
+  =>> { ''#1:_B_X $bx1:B_P $any1 $ex1:E_P $sp1 $any2 ''#1:_E_X }
+
+
+@OP30 => "OP\s+<=>>\n"
+{ $op:OP30 $sp:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X }
+  =>> { ''#1:_B_OP30 $op $sp $bx:B_P $any $ex:E_P ''#1:_E_OP30 }
+
+{ $bx1#1:_B_X '(?>':X $any1:ANYEXPR $ex1#1:_E_X ')':X $sp1:SP
+  $#2:_B_OP30 $any2:ANYEXPR $#2:_E_OP30 }
+  =>> { ''#1:_B_X $bx1:B_P $any1 $ex1:E_P $sp1 $any2 ''#1:_E_X }
+
+
+@OP31 => "OP\s+<...>\n"
+{ $op:OP31 $sp:SP $bx#1:_B_X '(?>':X $any:ANYEXPR $ex#1:_E_X ')':X }
+ =>> { ''#1:_B_X $op $sp $bx:B_P $any $ex:E_P ''#1:_E_X }
+
+
+@OP32 => "OP\s+<as>\n"
+{ $op:OP32 $sp:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X }
+  =>> { ''#1:_B_OP32 $op $sp $bx:B_P $any $ex:E_P ''#1:_E_OP32 }
+
+{ $bx1#1:_B_X '(?>':X $any1:ANYEXPR $ex1#1:_E_X ')':X $sp1:SP
+  $#2:_B_OP32 $any2:ANYEXPR $#2:_E_OP32 }
+  =>> { ''#1:_B_X $bx1:B_P $any1 $ex1:E_P $sp1 $any2 ''#1:_E_X }
+
+
+@OP33 => "OP\s+<insteadof>\n"
+{ $op:OP33 $sp:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X }
+  =>> { ''#1:_B_OP33 $op $sp $bx:B_P $any $ex:E_P ''#1:_E_OP33 }
+
+{ $bx1#1:_B_X '(?>':X $any1:ANYEXPR $ex1#1:_E_X ')':X $sp1:SP
+  $#2:_B_OP33 $any2:ANYEXPR $#2:_E_OP33 }
+  =>> { ''#1:_B_X $bx1:B_P $any1 $ex1:E_P $sp1 $any2 ''#1:_E_X }
+
+
+@OP34 => "CA\s+<,>\n"
+{ [b: $:/[APC]_L/ | $:OP34 ] $sp:SP $c:OP34 }
+=>> { $b ''#1:_B_X ''#1:_E_X $sp $c }
+{ $c:OP34 $sp:SP $e:/[APC]_R/ }
+=>> { $c ''#1:_B_X ''#1:_E_X $sp $e }
+
+{ $op:OP34 $sp:SP $bx#1:_B_X '(?>':X $any:ANY $ex#1:_E_X ')':X  }
+  =>> { ''#1:_B_OP34 $op $sp $bx:B_P $any $ex:E_P ''#1:_E_OP34 }
+
+{ $bx1#1:_B_X '(?>':X $any1:ANY $ex1#1:_E_X ')':X $sp1:SP
+  $#2:_B_OP34 $any2:ANY $#2:_E_OP34 }
+  =>> { ''#1:_B_X $bx1:B_P $any1 $ex1:E_P $sp1 $any2 ''#1:_E_X }
+

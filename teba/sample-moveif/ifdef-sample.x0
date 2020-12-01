@@ -1,0 +1,125 @@
+#include <stdio.h>
+
+int main() {
+  int i;
+  for (i = 0; i < 100; i++) {
+#ifdef TEST /*TEBA:mark*/
+    printf(
+	   "%d\n"
+           , i);    
+#else
+    printf(
+	   "Num %d\n"
+           , i);    
+#endif
+}
+
+#ifdef DEBUG0 /* TEBA:mark */
+print(
+"sample\n"
+);
+#else
+print(
+);
+#endif
+
+#ifdef DEBUG1 /* TEBA:mark */
+  if (i != 100) {
+    print("error\n");
+    exit(1);
+  }
+#else
+    print("error\n");
+    exit(1);
+#endif
+
+
+# ifdef TEST /* TEBA:mark */
+  (void*)
+  printf("this is test\n")
+    ;
+#else
+  (void*)
+  return 0
+    ;
+# endif
+}
+
+int f1() {
+#ifdef F2 /* TEBA:mark */
+  int c
+#ifdef F1 /* TEBA:markx */
+    ,f1T
+    ,f1T_f2T
+#else
+    ,f1F_f2T
+#endif
+    ;
+#else
+  int c
+#ifdef F1 /* TEBA:markx */
+    ,f1T
+    ,f1T_f2F
+#else
+    ,f1F_f2F
+#endif
+    ;
+#endif
+}
+
+#ifdef V1 /*TEBA:mark*/
+#ifdef V2 /*TEBA:mark*/
+#ifdef V3 /*TEBA:mark*/
+int v0
+,v1
+  ,v2
+  ,v3
+  ;
+#else
+int v0
+,v1
+  ,v2
+  ;
+#endif //V3
+#elif defined V3 /*TEBA:mark*/
+int v0
+,v1
+  ,v3
+  ;
+#else
+int v0
+,v1
+  ;
+#endif //V3
+#elif defined V2 /*TEBA:mark*/
+#ifdef V3 /*TEBA:mark*/
+int v0
+  ,v2
+  ,v3
+  ;
+#else
+int v0
+  ,v2
+  ;
+#endif //V3
+#elif defined V3 /*TEBA:mark*/
+int v0
+  ,v3
+  ;
+#else
+int v0
+  ;
+#endif //V3
+
+
+#ifdef BODY /*TEBA:mark*/
+#ifdef HEAD /*TEBA:markx*/
+if (cond) 
+#endif
+{
+    print("ok");
+}
+#elif defined HEAD /*TEBA:markx*/
+if (cond) 
+#endif
+

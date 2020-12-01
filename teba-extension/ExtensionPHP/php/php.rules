@@ -1,0 +1,102 @@
+# elseif
+{ $:CT_EIF/elseif/ $:SP $#1:B_P $:P_L $:SP
+  $[cond: $#2:B_P $:ANY $#2:E_P $]+
+  $:SP $:P_R $#1:E_P $:SP $[: $:C_L $]?
+  }
+  => {'PHP':LANG 'ELSEIF':MODEL '':B_COND $cond '':E_COND }
+
+#for var++ end_NOT_include
+{ $:CT_BE/for/ $:SP $:P_L $:SP
+  $#2:B_P
+  $#5:B_P $var:ID_V $#5:E_P $:SP
+  $:OP/=/ $:SP
+  $#6:B_P $ini:ANY $#6:E_P
+  $#2:E_P $:SP $:FSC $:SP
+  $#3:B_P
+  $#7:B_P $var:ID_V $#7:E_P $:SP
+  $:OP/</ $:SP
+  $#8:B_P $end:ANY $#8:E_P
+  $#3:E_P $:SP $:FSC $:SP
+  $#4:B_P
+  $#9:B_P $var:ID_V $#9:E_P $:SP
+  $:OP/\+\+/ $:SP $#4:E_P $:SP
+  $:P_R $:SP $[: $:C_L $]? }
+  => {'PHP':LANG 'FOR':MODEL $var:VAR '':B_INI $ini '':E_INI '':B_END $end '':E_END 'False':END_INCLUDE}
+
+#for var++ end_include
+{ $:CT_BE/for/ $:SP $:P_L $:SP
+  $#2:B_P
+  $#5:B_P $var:ID_V $#5:E_P $:SP
+  $:OP/=/ $:SP
+  $#6:B_P $ini:ANY $#6:E_P
+  $#2:E_P $:SP $:FSC $:SP
+  $#3:B_P
+  $#7:B_P $var:ID_V $#7:E_P $:SP
+  $:OP/<=/ $:SP
+  $#8:B_P $end:ANY $#8:E_P
+  $#3:E_P $:SP $:FSC $:SP
+  $#4:B_P
+  $#9:B_P $var:ID_V $#9:E_P $:SP
+  $:OP/\+\+/ $:SP $#4:E_P $:SP
+  $:P_R $:SP $[: $:C_L $]? }
+  => {'PHP':LANG 'FOR':MODEL $var:VAR '':B_INI $ini '':E_INI '':B_END $end '':E_END 'True':END_INCLUDE}
+
+#for var=var+1 end_NOT_include
+{ $:CT_BE/for/ $:SP $:P_L $:SP
+  $#2:B_P
+  $#5:B_P $var:ID_V $#5:E_P $:SP
+  $:OP/=/ $:SP
+  $#6:B_P $ini:ANY $#6:E_P
+  $#2:E_P $:SP $:FSC $:SP
+  $#3:B_P
+  $#7:B_P $var:ID_V $#7:E_P $:SP
+  $:OP/</ $:SP
+  $#8:B_P $end:ANY $#8:E_P
+  $#3:E_P $:SP $:FSC $:SP
+  $#4:B_P
+  $#9:B_P $var:ID_V $#9:E_P $:SP
+  $:OP/=/ $:SP
+  $#12:B_P
+  $#13:B_P $var:ID_V $#13:E_P $:SP
+  $:OP/\+/ $:SP
+  $#14:B_P $:LIN/1/ $#14:E_P
+  $#12:E_P
+  $#4:E_P $:SP
+  $:P_R $:SP $[: $:C_L $]? }
+  => {'PHP':LANG 'FOR':MODEL $var:VAR '':B_INI $ini '':E_INI '':B_END $end '':E_END 'False':END_INCLUDE}
+
+#for var=var+1 end_include
+{ $:CT_BE/for/ $:SP $:P_L $:SP
+  $#2:B_P
+  $#5:B_P $var:ID_V $#5:E_P $:SP
+  $:OP/=/ $:SP
+  $#6:B_P $ini:ANY $#6:E_P
+  $#2:E_P $:SP $:FSC $:SP
+  $#3:B_P
+  $#7:B_P $var:ID_V $#7:E_P $:SP
+  $:OP/<=/ $:SP
+  $#8:B_P $end:ANY $#8:E_P
+  $#3:E_P $:SP $:FSC $:SP
+  $#4:B_P
+  $#9:B_P $var:ID_V $#9:E_P $:SP
+  $:OP/=/ $:SP
+  $#12:B_P
+  $#13:B_P $var:ID_V $#13:E_P $:SP
+  $:OP/\+/ $:SP
+  $#14:B_P $:LIN/1/ $#14:E_P
+  $#12:E_P
+  $#4:E_P $:SP
+  $:P_R  $:SP $[: $:C_L $]? }
+  => {'PHP':LANG 'FOR':MODEL $var:VAR '':B_INI $ini '':E_INI '':B_END $end '':E_END 'True':END_INCLUDE}
+
+
+# foreach
+{ $:CT_BE/foreach/ $:SP $:P_L $:SP
+  $#2:B_P
+  $#3:B_P $array:ID_V $#3:E_P $:SP
+  $:OP/as/ $:SP
+  $#4:B_P $var:ID_V $#4:E_P $:SP
+  $#2:E_P $:P_R $:SP
+  $[: $:C_L $]?
+  }
+  => {'PHP':LANG 'FOREACH':MODEL $var:VAR $array:ARRAY}

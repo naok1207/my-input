@@ -1,0 +1,81 @@
+# if 
+{ $:CT_IF $:SP
+  $[cond: $[: $:B_P $:ANY $:E_P $]+ $] $[: $:SP $]? $[: $:SP_B $]?
+  $:/(?:THEN|SP_NL)/ }
+  => { 'Ruby':LANG 'IF':MODEL '':B_COND $cond '':E_COND}
+
+{ $:CT_IF $:SP
+  $[: $:P_L $:SP $]
+  $[cond: $[: $:B_P $:ANY $:E_P $]+ $]
+  $[: $:SP $:P_R $] $:SP
+  $:THEN }
+  => { 'Ruby':LANG 'IF':MODEL '':B_COND $cond '':E_COND}
+
+# elsif
+{ $:CT_EIF/elsif/ $:SP
+  $[cond: $[: $:B_P $:ANY $:E_P $]+ $] $[: $:SP $]? $[: $:SP_B $]?
+  $:/(?:THEN|SP_NL)/ }
+  => { 'Ruby':LANG 'ELSEIF':MODEL '':B_COND $cond '':E_COND}
+
+{ $:CT_EIF/elsif/ $:SP
+  $[: $:P_L $:SP $]
+  $[cond: $[: $:B_P $:ANY $:E_P $]+ $]
+  $[: $:SP $:P_R $] $:SP
+  $:THEN }
+  => { 'Ruby':LANG 'ELSEIF':MODEL '':B_COND $cond '':E_COND}
+
+
+# else 
+{ $:CT_EL $[: $:SP_B $]? $:SP_NL }
+  => { 'Ruby':LANG 'ELSE':MODEL }
+
+
+# while
+{ $:CT_BE/while/ $:SP
+  $[cond: $[: $:B_P $:ANY $:E_P $]+ $] $[: $:SP $]? $[: $:SP_B $]?
+  $:/(?:CT_DO|SP_NL)/ }
+  => { 'Ruby':LANG 'WHILE':MODEL '':B_COND $cond '':E_COND}
+
+{ $:CT_BE/while/ $:SP
+  $[: $:P_L $:SP $]
+  $[cond: $[: $:B_P $:ANY $:E_P $]+ $]
+  $[: $:SP $:P_R $] $:SP
+  $:CT_DO }
+  => { 'Ruby':LANG 'WHILE':MODEL '':B_COND $cond '':E_COND}
+
+
+# for
+
+# for ...
+{ $:CT_BE/for/ $:SP
+  $#1:B_P $var:ID_C $#1:E_P $:SP
+  $:IN $:SP
+  $[: $:B_P $:P_L $]?
+  $#2:B_P $ini:ANY $#2:E_P $:SP
+  $:OP_X $:SP
+  $#3:B_P $end:ANY $#3:E_P $[: $:SP $]?
+  $[: $:P_R $:E_P $]? $[: $:SP $]? $[: $:SP_B $]? 
+  $:/(?:CT_DO|SP_NL)/ }
+  => { 'Ruby':LANG 'FOR':MODEL $var:VAR '':B_INI $ini '':E_INI '':B_END $end '':E_END 'False':END_INCLUDE }
+
+# for ..
+{ $:CT_BE/for/ $:SP
+  $#1:B_P $var:ID_C $#1:E_P $:SP
+  $:IN $:SP
+  $[: $:B_P $:P_L $]?
+  $#2:B_P $ini:ANY $#2:E_P $:SP
+  $:OP_Y $:SP
+  $#3:B_P $end:ANY $#3:E_P $[: $:SP $]?
+  $[: $:P_R $:E_P $]? $[: $:SP $]? $[: $:SP_B $]?
+  $:/(?:CT_DO|SP_NL)/ }
+  => { 'Ruby':LANG 'FOR':MODEL $var:VAR '':B_INI $ini '':E_INI '':B_END $end '':E_END 'True':END_INCLUDE }
+
+# foreach
+{ $:CT_BE/for/ $:SP
+  $#1:B_P $var:ID_C $#1:E_P $:SP
+  $:IN $:SP
+  $#3:B_P $array:ID_C $#3:E_P $[: $:SP $]? $[: $:SP_B $]? 
+  $:/(?:CT_DO|SP_NL)/ }
+  => { 'Ruby':LANG 'FOREACH':MODEL  $var:VAR $array:ARRAY }
+
+

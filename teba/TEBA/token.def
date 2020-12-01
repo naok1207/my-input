@@ -1,0 +1,109 @@
+# 
+# Copyright (c) 2009-2020 The TEBA Project. All rights reserved.
+# 
+# Redistribution and use in source, with or without modification, are
+# permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+# 
+# Author: Atsuhi Yoshida
+
+#
+# Definition of Tokens
+#
+
+# Spaces and newlines
+SP_B	/\f|[ \t]+/
+SP_NL	/\n/
+SP_NC	/\\\n/
+
+# Comment is a kind of spaces.
+SP_C	/\/\*.*?\*\/|(?>\/\/[^\n]*)/
+
+# Specail tags for analysis applications.
+
+SP_TAG  /#@\w+\b/
+
+# Control word followed by condition expressions and a block
+# "BE" means "Block" and "Expression"
+CT_BE  /(?:for|while|switch)\b/
+CT_IF  /if\b/
+# Control word followed by a block
+CT_EL	/(?:else)\b/
+CT_DO	/(?:do)\b/
+
+# Reserved words
+RE_TD	/typedef\b/
+RE_SUE	/(?:struct|union|enum)\b/
+RE_LC	/case\b/
+RE_LD	/default\b/
+RE_JP	/(?:return|continue|break)\b/
+RE_JPG	/goto\b/
+
+# Types
+ID_TP	/(?:void|int|char|long|short|float|double)\b/
+
+# type_specifier (except ID_T)
+ID_TPSP	/(?:un)?signed\b/
+# storage class specifier
+ID_TPCS	/(?:static|extern|register|auto)\b/
+# type qualifier
+ID_TPQ	/(?:volatile|const|restrict)\b/
+# function specifier
+ID_TPFS	/(?:inline)\b/
+
+ATTR	/__[a-z_]+__\b/
+
+#OP	/(?:sizeof|defined)\b/
+OP	/(?:sizeof)\b/
+DEFINED	/(?:defined)\b/
+# 'defined's in a directive is operator. See parser-stage1.rules
+
+P_L	/\(/
+P_R	/\)/
+A_L	/\[/
+A_R	/\]/
+C_L	/{/
+C_R	/}/
+SC	/;/
+CA	/,/
+
+# literal strings and chars
+LIS	/L?"(?:[^"\\]++|\\.)*+"/
+LIC	/L?'(?:[^'\\]++|\\.)*+'/
+
+# preprocessor operators and filenames
+PRE_JOIN	/##/
+PRE_S		/#/
+#PRE_H	/<[-\w.\/]+>/
+
+# literal numbers
+LIN	/0[xX][0-9A-Fa-f]+[uUlL]*/
+LIN	/\d+(?:\.\d+(?:[eE][-+]?\d+)?|[eE][-+]?\d+)[FfLl]?/
+LIN	/\d+[uUlL]*/
+
+IDN	/\$?[\@\w]+(?:\$\w+)*/
+# '@' is used in GNULIB as special marks.
+# '$' is used for apollo and VMS configuration. (coreutils-8.16/lib/getloadavg.c)
+IDN   /\.\.\./
+
+# for C++
+OP    /::/
+
+OP    /\+\+|\-[->]|\&\&|\|\||(?:>>|<<|[-+*\/\%=<>!&|~^])=?|[\?:\.]/
+

@@ -1,0 +1,13 @@
+int f(void)
+{
+
+    int i;
+    i = 0;
+while (i < MAX) {
+  {
+	printf("%d\n", i); /* hogehoge */
+    }
+  i++ ;
+}
+    return i;
+}

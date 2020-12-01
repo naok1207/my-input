@@ -1,0 +1,18 @@
+% space preserving
+% before
+
+if ( ${cond1:EXPR} ) {
+  if ( ${cond2:EXPR} ) {
+    $[stmt: ${:STMT} $]+
+  }
+}
+
+% after
+
+/* merge two ifs :begin */
+if ( ${cond1} && ${cond2} ) {
+ $[stmt]
+}
+/* merge two ifs :end */
+
+% end

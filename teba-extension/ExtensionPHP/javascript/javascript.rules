@@ -1,0 +1,7 @@
+# foreach
+{ $:CT_BE/for/ $:SP $:P_L $:SP
+  $#2:B_P $var:ID_C $#2:E_P $:SP
+  $:OF $:SP
+  $#3:B_P $array:ID_C $#3:E_P $:SP
+  $:P_R $:SP $[: $:C_L $]? }
+  => {'JavaScript':LANG 'FOREACH':MODEL $var:VAR $array:ARRAY}

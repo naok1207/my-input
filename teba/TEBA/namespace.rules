@@ -1,0 +1,253 @@
+# 
+# Copyright (c) 2009-2020 The TEBA Project. All rights reserved.
+# 
+# Redistribution and use in source, with or without modification, are
+# permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+# 
+# Author: Atsuhi Yoshida
+
+
+### Labels
+
+{ $b:B_LB $lable:IDN } => { $b $lable:ID_LB }
+
+{ $goto:RE_JPG $sp:SP $label:IDN } => { $goto $sp $label:ID_LB }
+
+#### Tags
+
+{ $struct:RE_SUE $sp:SP $tag:IDN } => { $struct $sp $tag:ID_TAG }
+
+#### C++ template 
+
+{ $bs:B_ST $t:IDN/template/ $sp1:SP $op1:OP/</ $sp2:SP $c:IDN/class|typename/
+  $sp3:SP $name:IDN $sp4:SP $op2:OP/>/ }
+=> { $bs $t:RE_CPP $sp1 $op1:OP_CPP $sp2 $c:RE_CPP $sp3 $name $sp4 $op2:OP_CPP }
+
+#### Types
+
+# ID_TP is primitive type at this point. $qual may be a macro of extern,
+# static, and so on.
+{ $qual:IDN $sp:SP $type:ID_TP } => { $qual:ID_TP $sp $type }
+
+# The identifer following storage class is type, except function name.
+{ $st:ID_TPCS $sp:SP $[fs: $:/ID_(?:TPFS|TPQ)/ $:SP $]? $id:IDN $sp2:SP $pl:P_L }
+=> { $st $sp $fs $id:ID_VF $sp2 $pl }
+
+{ $st:ID_TPCS $sp:SP $[fs: $:/ID_(?:TPFS|TPQ)/ $:SP $]? $id:IDN }
+=> { $st $sp $fs $id:ID_TP }
+
+### typedef delcarations
+{ $b#1:B_ST $typedef:RE_TD '(?>':X $any:ANY $e#1:E_ST ')':X }
+=> {  $b:B_TD $typedef $any $e:E_TD }
+
+### declared name in typedefs
+{ $type:IDN $sp:SP $[arr: $#1:A_L $:ANYEXPR $#1:A_R $:SP $]*
+  $[attr: $:ATTR $:SP $[: $#a:P_L '(?>':X $:ANY $#a:P_R ')':X $:SP $]? $]?
+  $semi:SC $e:E_TD }
+=> { $type:ID_VFT $sp $arr $attr $semi $e }
+
+### referenced type names in typedefs
+{ $typedef:RE_TD $sp:SP $type:IDN } => { $typedef $sp $type:ID_TP }
+
+@_CONSTQ => "(?:ID_TPQ\s+<(?:const|restrict|volatile)>\n|OP\s+<\*>\n)"
+@CONSTQ => "(?:@_SP|@_CONSTQ)*"
+
+### function pointer in typedef
+{ $tpr#n:P_L $sp1:SP $ope:OP/\*/ $sp2:SP $type:IDN $sp3:SP $tpl#n:P_R
+  $sp4:SP $apr#a:P_L '(?>':X $args:ANY $apl#a:P_R ')':X $semi:SC $en:E_TD }
+=> { $tpr $sp1 $ope $sp2 $type:ID_TP $sp3 $tpl $sp4 $apr $args $apl $semi $en }
+
+## C++ template
+
+{ $templ:IDN $sp:SP $lt:OP/</ $type:IDN $gt:OP/>/ }
+=> { $templ $sp $lt $type:ID_TP $gt }
+
+### identify variables to avoid confusing with typedef-ed types.
+
+# At this point, $type is primitive type only.
+{ $type:ID_TP $cq:CONSTQ $var:IDN } => { $type $cq $var:ID_VF }
+
+# find ID_VF, which includes ID_MEM. ID_MEM will be distinguished later.
+@SAFE_PRE_OP => "OP\s+<(?:\+\+|\-[->]|\&\&|\|\||(?:>>|<<|[-+\/\%=>!\&|~^])=?|[<\*]=|[\?\.])>\n"
+# unsafe: '*'(for pointer), ':'(for label), '<' for C++ template
+# Ex. typedef int (*f)(int);  f is type.
+{ $op:SAFE_PRE_OP $sp:SP $var:IDN } => { $op $sp $var:ID_VF }
+
+@SAFE_POST_OP => "OP\s+<(?:\+\+|\-[->]|\&[\&=]|\|\||(?:>>|<<|[-+\/\%=<!\|~^])=?|[>\*]=|[\?\.])>\n"
+# unsafe: '*'(for pointer), ':'(for label), '&' (for C++), > (for C++)
+{ $var:IDN $sp:SP $op:SAFE_POST_OP } => { $var:ID_VF $sp $op }
+
+### type name before variable or function
+
+{ $bs:B_ST $sp1:SP $[: $q:ID_TPQ $spq:SP $]? $type:IDN $cq:CONSTQ
+  $var:/ID(?:N|_VF)/ $sp:SP $[en: $:/CA|SC|[PA]_L/ $| $:OP/=/ $] }
+=> { $bs $sp1 $q $spq $type:ID_TP $cq $var:ID_VF $sp $en }
+
+#{ $extern:ID_TPCS/extern/ $sp:SP $type:IDN } => { $extern $sp $type:ID_TP }
+{ $qual:ID_TPQ $sp1:SP $type:IDN $sp2:SP $p:OP/\*/}
+=> { $qual $sp1 $type:ID_TP $sp2 $p }
+
+### Heurstics
+
+## types in sizeof with parentheses
+{ $s:OP/sizeof/ $sp1:SP $pl#1:P_L $sp2:SP $type:IDN $sp3:SP 
+  $[cq: $:_CONSTQ $:SP $]+ $pr#1:P_R }
+=> { $s $sp1 $pl $sp2 $type:ID_TP $sp3 $cq $pr }
+
+## types in cast operator
+
+# find typical function call arguments
+{ $id:/IDN|ID_VF|ATTR/ $sp:SP $pl#1:P_L $arg:ANYEXPR $pr#1:P_R }
+=>> { $id $sp ''#1:_B_ARG $pl $arg $pr ''#1:_E_ARG }
+# _[BE]_ARG are used for recognizing cast operators and then removed.
+# The following rule recognize (x) is cast in f(x)-1 wrongly.
+
+# find cast operators.
+{ $pl#1:P_L $sp1:SP $[: $q:ID_TPQ $spq:SP $]? $type:IDN $cq:CONSTQ $pr#1:P_R
+  $sp2:SP $[var: $:/LI\w+|ID_VF|IDN/ $| $:OP/-/ $:LIN 
+              $| $:P_L $:SP $:/ID_TP\w*|_MAY_CAST/ $] }
+ =>> {  $pl $sp1 $q $spq '':_MAY_CAST $type $cq $pr $sp2 $var }
+# The reason of specifying "$:OP/-/ $:LIN" in $[var] is that cast operators
+# applying -1, such as "(unsigned int) -1", often appear in real source
+# programs. There are ambiguous cases for identifying cast operators,
+# such as "(x) -1", in which x may type or variable.
+
+# No cast operator appears in the head of function definitions.
+# Ex. For "T (f)(int, ...) { }", _MAY_CAST is to be inserted before (f).
+{ $:_MAY_CAST in FD } => {}
+# Types in Cast operators.
+{ $:_MAY_CAST $t:IDN } => { $t:ID_TP }
+
+# Memo:
+# In the expression "(T) ++a", (T) is a cast operator. But no rule is defined
+# to recognize it.
+# (X)(Y)(f)() consits of two cast operators (X)(Y) and a function call (f)().
+# Without knowing X and Y are type, the rules cannot recognize (X)(Y)
+# as cast operators.
+
+## types in prototypes
+{ $type:IDN $sp1:SP $[ptr: $:OP/\*/ $:SP $]+  $cma:/CA|P_R/ }
+=> { $type:ID_TP $sp1 $ptr $cma }
+
+## return types of function definitions
+{ $bfd:B_FD $type:IDN } => { $bfd $type:ID_TP }
+
+# Types before function names
+{ $bfd:B_FD $[tp: $:/ID_TP\w*/ $:SP $]* $type:IDN $sp:SP $name:IDN } 
+=> { $bfd $tp $type:ID_TP $sp $name }
+
+# Types in arguments of function definitions
+{ $t:/ID_TP\w*|E_SUE/ $sp1:SP $[ptr1: $[: $:OP/\*/ $| $:ATTR $] $:SP $]*
+  $[func: $:/ID_VF|IDN/ $:SP $[: $:PRE_JOIN $:/ID_VF|IDN/ $:SP $]* $]
+  $ba:_B_ARG $pl:/P_L/ $sp3:SP $type:IDN $sp4:SP
+  $[var: $[: $:OP/\*/ $:SP $]* $:IDN
+      $| $:_B_ARG $#p:P_L $:SP $[: $:OP/\*/ $:SP $]* $:IDN $#p:P_R $] }
+=> { $t $sp1 $ptr1 $func $ba $pl $sp3 $type:ID_TP $sp4 $var }
+
+{ $pl#1:P_L $sp1:SP $[type: $:/ID_TP(?:SP|Q)?/ $| $:_STRUCT_REF $]
+    $[decr: $:/ID\w+|A_[LR]|LIN|_[BE]_TARG/ $| $:SP $| $:OP/\*/ 
+         $| $:_STRUCT_REF $| $#i:P_L '(?>':X $:ANY $#i:P_R ')':X $]+ }
+=>> { $pl $sp1 '':_TARG $type $decr }
+
+{ $targ:_TARG $[type: $:/IDN|ID_TP\w*/ $| $:_STRUCT_REF $]
+    $[decr: $:/ID\w+|A_[LR]|LIN|_[BEX]_TARG|_[BE]_ARG/ $| $:SP $| $:OP/\*/
+         $| $:_STRUCT_REF $| $#i:P_L '(?>':X $:ANY $#i:P_R ')':X $]+
+    $cma:CA $sp:SP }
+=>> { '':_X_TARG $type $decr $cma $sp $targ }
+
+{ $targ:_TARG $[type: $:/IDN|ID_TP\w*/ $| $:_STRUCT_REF $]
+    $[decr: $:/ID\w+|A_[LR]|LIN|_[BE]_TARG/ $| $:SP $| $:OP/\*/ 
+         $| $:_STRUCT_REF $| $#i:P_L '(?>':X $:ANY $#i:P_R ')':X $]+
+    $pr:P_R}
+=>> { '':_X_TARG $type $decr $pr }
+
+{ $:_X_TARG $id:IDN } => { $id:ID_TP }
+{ $:/_(?:X_)?TARG/ } => {}
+
+## typical function pointer
+{ $tp:ID_TP $cq:CONSTQ $tpr#n:P_L $sp1:SP $ope:OP/\*/ $sp2:SP $type:/IDN|ID_VF/
+  $sp3:SP $tpl#n:P_R $sp4:SP $apr#a:P_L $arg:IDN $apl#a:P_R $semi:SC $en:E_ST }
+=> { $tp $cq $tpr $sp1 $ope $sp2 $type $sp3 $tpl $sp4 $apr
+     $arg:ID_TP $apl $semi $en }
+# for ex. size_t in coreutils-8.16/lib/allocator.h.
+
+#### references of struct/union members
+@MEM_REF => "OP\s+<(?:\.|->)>\n"
+{ $ref:MEM_REF $sp:SP $mem:/ID(N|_VF)/ } => { $ref $sp $mem:ID_MB }
+
+### separate enum from strunum, for the next rule.
+{ $b#1:B_SUE $t:RE_SUE/enum/ '(?>':X $def:ANY $e#1:E_SUE ')':X }
+  =>> { $b:B_EN $t $def $e:E_EN }
+
+#### all remained IDNs are treated as variables or function names.
+@|NameSpaces->id_fix|
+
+#### declaration of struct/union members
+# for avoiding confusing with types and members, this filter should be
+# applied after id_fix. But, it may make miss identification, because
+# all ID_VF are replaced with ID_MB.
+@|NameSpaces->id_member|
+# 
+#{
+#  $b#1:B_SCT $struct:RE_SUE/struct/ $sp:SP $[tag: $:IDN $:SP $]? $cl#2:C_L
+#    '(?>':X $any1:ANY $var:ID_VAR ')':X
+#    '(?>':X $any2:ANY $cr#2:C_R ')':X $e#1:E_SCT
+#} =>> {
+# $b $struct $sp $tag $cl
+#    $any1 $var:ID_MB $any2 $cr $e
+#}
+### array sizes in struct/union defintions are not ID_MB
+#{ $pl#1:A_L $sp1:SP $var:ID_MB $sp2:SP $ar#1:A_R }
+#=> { $pl $sp1 $var:ID_VAR $sp2 $ar}
+# HeuristicFilter->rewrite contains this rule.
+
+#### cast operators
+
+# Ex. (unsigned), (unsigned int *), (struct T **), (int (*)(int, int))
+# (struct T * (*)(int, struct X *))
+{ $pl#1:P_L $sp1:SP 
+  $[type: $[: $:/ID_TP(?:Q|SP)?/ $:SP $]*
+      $[: $:/ID_TP(?:Q|SP)?/
+          $| $#sue:/B_(?:SUE|EN)/ '(?>':X $:ANY $#sue:/E_(?:SUE|EN)/ ')':X $]
+      $:CONSTQ
+      # for function pointers
+      $[: $#n:P_L $:SP $[: $:OP/\*/ $:SP $]+ $#n:P_R $:SP
+         $#arg:P_L $[: $:OP/\*/ $| $:/ID_TP(?:Q|SP)?/ $| $:CA $| $:SP
+           $| $#sue2:/B_(?:SUE|EN)/ '(?>':X $:ANY $#sue2:/E_(?:SUE|EN)/ ')':X
+         $]* $#arg:P_R $:SP $]?
+  $] $pr#1:P_R $sp2:SP
+  $[r_expr: $:/(?:P_L|ID|LI)\w*/ $| $:OP/[-\+\*&~!]|\+\+|\-\-|sizeof/ $] }
+ =>> { ''#1:B_CAST $pl $type $pr ''#1:E_CAST $sp2 $r_expr }
+
+# clean-up
+{ $:/_[BE]_ARG/ } => { }
+
+#### classify [BE]_SUE to struct/union
+
+{ $b#1:B_SUE $t:RE_SUE/struct/ '(?>':X $def:ANY $e#1:E_SUE ')':X }
+  =>> { $b:B_SCT $t $def $e:E_SCT }
+
+{ $b#1:B_SUE $t:RE_SUE/union/ '(?>':X $def:ANY $e#1:E_SUE ')':X }
+  =>> { $b:B_UN $t $def $e:E_UN }
+
+{ $s:OP/sizeof/ $sp:SP $#1:B_CAST $t:ANYEXPR $#1:E_CAST } => { $s $sp $t }
+
+#### clean up
+#{ $:SC// } => { }

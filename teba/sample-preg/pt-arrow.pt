@@ -1,0 +1,2 @@
+//${:VAR}->${:VAR}->${:VAR}
+x${%begin}->${%end}y;

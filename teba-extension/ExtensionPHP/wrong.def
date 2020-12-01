@@ -1,0 +1,8 @@
+CO       /:/
+CT_EIF   /(elif|elsif)\b/
+RANGE    /range\b/
+IN       /in\b/
+OF	/of\b/
+THEN	  /then\b/
+OP_X    /\.\.\./
+OP_Y    /\.\./

@@ -1,0 +1,5 @@
+CT_EIF  /elsif\b/
+THEN	  /then\b/
+IN      /in\b/
+OP_X    /\.\.\./
+OP_Y    /\.\./

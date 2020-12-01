@@ -1,0 +1,55 @@
+# 
+# Copyright (c) 2009-2020 The TEBA Project. All rights reserved.
+# 
+# Redistribution and use in source, with or without modification, are
+# permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+# 
+# Author: Atsuhi Yoshida
+
+# 14 right: =, +=, -=, *=, /=, %=, <<=, >>=, &=, ^=, |=
+
+@_EXPRS => "@_EXPRS|_[BE]_OP14.*+\n"
+
+@OP14 => "OP\s+<(?:[-\+\*\/%&^\|]|<<|>>)?=>\n"
+
+#{ $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X $sp:SP $op:OP14 }
+#=>> { ''#1:_B_OP14 $bx:B_P $any $ex:E_P $sp $op ''#1:_E_OP14 }
+#
+# For avoiding heavy backtracks, the avobe rule is decomposed to two rules.
+#{ $ex:_E_X $sp:SP $op:OP14 } => { ''#1:_B_OP14 $ex $sp $op:OP14 ''#1:_E_OP14 }
+#{ $bx#1:_B_X $any:ANY $bop:_B_OP14  $ex#1:_E_X }
+#=>> { $bop $bx:B_P $any $ex:E_P }
+{ $ex:_E_X $sp:SP $op:OP14 } => { $ex ''#1:_B_OP14 $sp $op:OP14 ''#1:_E_OP14 }
+{ $bx#1:_B_X '(?>':X $any:ANY $ex#1:_E_X ')':X $bop:_B_OP14 }
+=>> { $bop $bx:B_P $any $ex:E_P }
+
+# For initialization of struct: Ex. coreutils-8.22/src/df.c
+#   struct T x = { [X] = { ... }, [Y] = {...}};
+{ $e:_E_OP14 $sp:SP $cl#1:C_L '(?>':X $any:ANY $cr#1:C_R ')':X }
+=>> { $e $sp ''#x:_B_X ''#cp:B_CP $cl $any $cr ''#cp:E_CP ''#x:_E_X }
+
+{ $bx1#1:_B_OP14 '(?>':X $any1:ANYEXPR $op:OP14 $ex1#1:_E_OP14 ')':X $sp:SP
+  $bx2#2:_B_X '(?>':X $any2:ANY $ex2#2:_E_X ')':X }
+=>> { ''#1:_B_X $any1 $op $sp $bx2:B_P $any2 $ex2:E_P ''#1:_E_X }
+
+# In the case of huge array intializers, pattern-matching engine fails to match
+# due to the limitation of matching length. To avoid it, some trics is needed
+# such as following defintions for ANY.
+# @LONG_ANY => "(?:(?:_B_X\s+(#\w+).*\n(?:.*\n)*?_E_X\s+\g{-1}.*+\n)|(?:[^_]|_[^BE

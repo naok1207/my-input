@@ -1,0 +1,6 @@
+%before
+${type:TYPE} $[decr: ${{var:ID_VF}} $] = ${exp:EXPR};
+%after
+${type} ${decr};
+${var} = ${exp};
+%end

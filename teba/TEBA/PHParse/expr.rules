@@ -1,0 +1,122 @@
+# 
+# Copyright (c) 2009-2020 The TEBA Project. All rights reserved.
+# 
+# Redistribution and use in source, with or without modification, are
+# permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+# 
+# Author: Atsuhi Yoshida
+
+# Operator Precedence for PHP
+# 00 left: \
+# 01 none: clone, new
+# 02 left: [
+# 03 right: **
+# 04 right: ++ -- ~ (int) (float) (string) (array) (object) (bool) @
+# 05 none: instanceof
+# 06 right: !
+# 07 left: * / %
+# 08 left: + - .
+# 09 left: << >>
+# 10 none: < <= > >=
+# 11 none: == != === !== <> <=>
+# 12 left: &
+# 13 left: ^
+# 14 left: |
+# 15 left: &&
+# 16 left: ||
+# 17 right: ??
+# 18 left: ?:
+# 19 right: = += -= *= **= /= .= %= &= |= ^= <<= >>=
+# 20 left: and
+# 21 left: xor
+# 22 left: or
+
+# special identifier 'static'
+{ $st:RE_PAT/static/ } => { $st:ID_STATIC }
+{ $st:ID_STATIC $sp:SP $k:/(?:RE_|ID)\w*/ }
+=> { $st:RE_PAT $sp $k }
+# if 'static'is identified ID_STATIC by tokenizer,
+# we can remove the first rule.
+
+# anonymous function
+{ $f:RE_F $sp:SP $pl:P_L } => { $f $sp '':ID_C $pl }
+
+# terminal elements
+@TERMINAL => "(?:ID_[VCS]|LI[CNSH]).*+\n"
+{ $id:TERMINAL } => { ''#1:_B_X $id ''#1:_E_X }
+
+# Parenthesis
+{ $pl:P_L } => { '':_B_X $pl }
+{ $pr:P_R } => { $pr '':_E_X }
+
+# for variable variables ${"hoge"}
+{ $pl:C_L } => { '':_B_X $pl }
+{ $pr:C_R } => { $pr '':_E_X }
+
+# strings containing variable references.
+{ $b:B_LIS } => { '':_B_X $b}
+{ $e:E_LIS } => { $e '':_E_X}
+
+@|BeginEnd->new()->conv|
+
+# unary operators ( +, -, \, &, ., \ )
+{ $bx#1:_B_X '(?>':X $any:ANYEXPR $ex#1:_E_X ')':X $sp:SP $op:OP/(?:\\\\|[-+&.])/ }
+  => { $bx $any $ex $sp $op:OP_BIN }
+
+{ $op:OP/(?:\\\\|[-+&.])/ } => { $op:OP_U }
+{ $op:OP_BIN } => { $op:OP }
+
+{ $op:OP_U $sp:SP $bx#1:_B_X '(?>':X $any:ANYEXPR $ex#1:_E_X ')':X }
+=> { ''#1:_B_X $op $sp $bx:B_P $any $ex:E_P ''#1:_E_X }
+
+# namespace separtors  ## generated rule by gen_expr_rules.pl
+@OP01 => "OP\s+<\\\\>\n"
+{ $op:OP01 $sp:SP $bx#1:_B_X $any:ANYEXPR $ex#1:_E_X }
+  =>> { ''#1:_B_OP01 $op $sp $bx:B_P $any $ex:E_P ''#1:_E_OP01 }
+
+{ $bx1#1:_B_X '(?>':X $any1:ANYEXPR $ex1#1:_E_X ')':X $sp1:SP
+  $#2:_B_OP01 $any2:ANYEXPR $#2:_E_OP01 }
+  =>> { ''#1:_B_X $bx1:B_P $any1 $ex1:E_P $sp1 $any2 ''#1:_E_X }
+
+# cast
+{ $[cast: $:P_L $:SP $:ID_TP $:SP $:P_R $] } => { ''#1:B_CST $cast ''#1:E_CST }
+#  ## treat '@' as cast operator.
+{ $cast:OP/@/ } => { ''#1:B_CST $cast ''#1:E_CST }
+{ $:_B_X $c:B_CST } => { $c }
+{ $c:E_CST $:_E_X } => { $c }
+
+# for function call
+{ $bx#1:_B_X '(?>':X $f:ANYEXPR $ex#1:_E_X ')':X $sp:SP $x:_B_X $p:P_L }
+  => { $x $bx:B_P $f $ex:E_P $sp $p }
+
+# array constructor
+{ $t:ID_TP $sp:SP $x:_B_X $p:P_L }
+  => { $x $t $sp $p }
+
+# preparing for array
+{ $al:A_L } => { '':_X_AR $al }
+
+# ::class
+
+{ $op:OP/::/ $sp:SP $c:RE_CL } => { $op $sp ''#1:_B_X $c:ID_C  ''#1:_E_X }
+
+# types following function defintion
+
+{ $op:OP/:/ $sp:SP $t:ID_TP } => { ''#1:_B_TYPE $op $sp $t ''#1:_E_TYPE }

@@ -1,0 +1,9 @@
+% recursive
+% before
+${type:TYPE} ${decr:DECR} , $[others: ${:DECR} $[: , ${:DECR} $]* $] ;
+% after
+
+${type} ${decr};
+${type} $[others];
+
+% end

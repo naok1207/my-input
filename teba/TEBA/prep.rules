@@ -1,0 +1,64 @@
+# 
+# Copyright (c) 2009-2020 The TEBA Project. All rights reserved.
+# 
+# Redistribution and use in source, with or without modification, are
+# permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+# 
+# Author: Atsuhi Yoshida
+
+## find preprocessor directives
+##  /define|undef|ifn?def|endif|elif|error|include(?:_next)?/
+
+{ $top:LINETOP $sp0:SP $ps:PRE_S $sp:SP $dir:/IDN|CT_(?:IF|EL)/
+  $any:ANYTOKENSP $nl:LINEEND }
+=>> { $top '':B_DIRE $sp0 $ps:PRE_TOP $sp $dir:PRE_DIR $any '':E_DIRE $nl }
+# Now, PRE_S is # operator only.
+
+# Macro references in conditions of '#if', '#elif', '#ifdef' and '#ifndef'.
+{ $pre:PRE_DIR/.*if.*/ $any:ANYCONDS $end:E_DIRE }
+=> { $pre '':_B_PCOND $any '':_E_PCOND $end }
+@:NO_MATCH:END_COND:
+{ $:/IDN|ATTR/ in PCOND } => { $:ID_MC }
+{ $:/_[BE]_PCOND/ } => { }
+@:LABEL:END_COND:
+
+# Macro difinitions (may have arguments)
+{ $def:PRE_DIR/define/ $sp:SP $id:/ATTR|ID_.*/ } => { $def $sp $id:IDN }
+{ $def:PRE_DIR/define/ $sp1:SP $id:IDN $[arg: $:P_L $:ARGS $:P_R $]?
+  $sp2:SP1 $body:MACROBODY $sp3:SP $end:E_DIRE }
+=> { $def $sp1 $id:ID_MC $arg $sp2 ''#1:B_MCB $body ''#1:E_MCB $sp3 $end }
+
+# Macro definitions without no bodies.
+{ $def:PRE_DIR/(?:define|undef)/ $sp:SP $id:IDN } => { $def $sp $id:ID_MC }
+
+# include system header files.
+{ $inc:PRE_DIR/include.*/ $sp:SP $lt:OP/</ $[name: $:/\w+//[^>].*/ $]+ $gt:OP/>/ } 
+=> { $inc $sp $lt:B_PRE_H $name $gt:E_PRE_H }
+#{ $b:B_PRE_H $x:IDN $d:OP/\./ $y:IDN } =>> { $b $x $## $d $## $y }
+@|CParser->join_to_PRE_H|
+
+# include local header files.
+{ $inc:PRE_DIR/include.*/ $sp:SP $file:LIS } => {$inc $sp $file:PRE_H }
+
+# join tokens in #error and #pragma
+{ $bd:B_DIRE $t:PRE_TOP $sp1:SP $d:PRE_DIR/error|pragma/ $sp2:SP $a:/\w+/ $b:/[^E]\w+/ }
+=>> { $bd $t $sp1 $d $sp2 $a $## $b }
+{ $bd:B_DIRE $t:PRE_TOP $sp1:SP $d:PRE_DIR/error|pragma/ $sp2:SP $a:/\w+/}
+=> { $bd $t $sp1 $d $sp2 $a:ID_MSG }

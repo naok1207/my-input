@@ -1,0 +1,10 @@
+int a;
+a = 2;
+int *b;
+b = &a;
+char s[];
+s = "this is a string.";
+type_t **x;
+x = NULL;
+struct hoge *p;
+p = (struct hoge*)0;

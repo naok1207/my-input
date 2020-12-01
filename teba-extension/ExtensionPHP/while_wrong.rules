@@ -1,0 +1,43 @@
+#whileを削除
+{ $:CT_BE/while/ $:SP $any:ANY }
+ => { '':_ONE 'WHILE':MODEL '':_C $any}
+
+##条件式のくくり
+#( )有り　文末にdoやら：
+{$model:MODEL $:_C $#2:P_L $cond:ANY $#2:P_R $:SP $op:/(CT_DO|THEN|CO|C_L)/ $stmt:ANY $:SP_NL }
+ =>{ '':_TWO $model:MODEL '':B_COND $cond '':E_COND '':B_STMT $op $stmt '':E_STMT '\n':SP_NL 'CJP':CNT}
+
+#( )の有無を確認　文末にdoやら:
+{$model:MODEL  $:_C $cond:ANY $:SP $op:/(CT_DO|THEN|CO|C_L)/ $stmt:ANY $:SP_NL }
+ =>{ '':_TWO $model:MODEL '':B_COND $cond '':E_COND '':B_STMT $op $stmt '':E_STMT '\n':SP_NL 'YR':CNT}
+
+#( )を削除
+{$model:MODEL $:_C $#1:B_P $#2:P_L $cond:ANY $#2:P_R $#1:E_P $stmt:ANY $:SP_NL}
+ => { '':_TWO $model:MODEL '':B_COND $cond '':E_COND '':B_STMT $stmt '':E_STMT '\n':SP_NL 'CJP':CNT}
+
+#( )の有無を確認 文末は空
+{$model:MODEL  $:_C $cond:ANY $:SP_NL }
+ =>{ '':_TWO $model:MODEL '':B_COND $cond '':E_COND '\n':SP_NL 'R':CNT}
+
+
+##文チェック
+#文末が {
+{ $model:MODEL $any:ANY $:B_STMT $#1:C_L $stmt:ANY $:E_STMT $:SP_NL}
+ =>{ '':_THREE $model:MODEL $any '\n':SP_NL 'CJP':CNT }
+
+#文末が :
+ { $model:MODEL $any:ANY $:B_STMT $:CO $:ANY $:E_STMT $:SP_NL}
+ =>{ '':_THREE $model:MODEL $any '\n':SP_NL 'Y':CNT }
+
+#文末が do/then
+{ $model:MODEL $any:ANY $:B_STMT $:/(CT_DO|THEN)/ $:ANY $:E_STMT $:SP_NL}
+ =>{ '':_THREE $model:MODEL $any '\n':SP_NL 'R':CNT }
+
+ #文末に何もない
+ { $model:MODEL $any:ANY $:B_STMT $:E_STMT $:ANY $:SP_NL }
+  => { '':_THREE $model:MODEL $any '\n':SP_NL 'CPJR':CNT }
+
+#完全なモデル?
+{$:_ONE $:_TWO $:_THREE}
+ => { '':OK }
+

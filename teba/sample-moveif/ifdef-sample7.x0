@@ -1,0 +1,30 @@
+#if A
+            if (S
+# if WIDE_CHAR_VERSION
+                     && TYPE_WIDE_STRING1
+# else
+                     && TYPE_WIDE_STRING2
+# endif
+                    )
+              {
+              }
+#endif
+            else
+              {
+              }
+
+
+if (c) {
+ } else if
+#if B
+ (
+#if X
+x1
+#else
+x2
+#endif
+	    )
+
+  {
+  }
+#endif

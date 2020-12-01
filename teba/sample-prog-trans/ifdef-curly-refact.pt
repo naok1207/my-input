@@ -1,0 +1,25 @@
+%before
+
+#ifdef ${M:ID_MC}
+if (${C1:EXPR}) {
+  $[stmt1: ${:STMT} $]*
+#else
+if (${C2:EXPR}) {
+  $[stmt2: ${:STMT} $]*
+#endif
+  $[stmt3: ${:STMT} $]*
+}
+
+%after
+
+#ifdef ${M}
+if (${C1}) {
+  $[stmt1]$;
+  $[stmt3]$;
+}
+#else
+if (${C2}) {
+  $[stmt2]$;
+  $[stmt3]$;
+}
+#endif

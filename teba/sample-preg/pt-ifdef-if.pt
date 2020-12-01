@@ -1,0 +1,72 @@
+${%begin}
+#ifdef ${:EXPR}
+if (${:EXPR})
+#endif
+${%end}
+{
+}
+
+%%---
+
+${%begin}
+#ifdef ${:EXPR}
+if (${:EXPR})
+#else
+${%end}
+{
+}
+
+%%---
+
+${%begin}
+#ifdef ${:EXPR}
+if (${:EXPR}) {
+#endif
+${%end}
+}
+
+%%---
+
+${%begin}
+#ifdef ${:EXPR}
+if (${:EXPR}) {
+#else
+${%end}
+}
+
+${%begin}
+#if ${:EXPR}
+if (${:EXPR})
+#endif
+${%end}
+{
+}
+
+%%---
+
+${%begin}
+#if ${:EXPR}
+if (${:EXPR})
+#else
+${%end}
+{
+}
+
+%%---
+
+${%begin}
+#if ${:EXPR}
+if (${:EXPR}) {
+#endif
+${%end}
+}
+
+%%---
+
+${%begin}
+#if ${:EXPR}
+if (${:EXPR}) {
+#else
+${%end}
+}
+

@@ -1,0 +1,8 @@
+int f(int a[], int n) {
+    int r;
+    r = total(a, n - 1);
+#ifdef DEBUG_TOTAL
+fprintf(stderr, "DEBUG: total = %d (at %d)\n", r, __LINE__);
+#endif
+    printf("total = %d\n", r);
+}

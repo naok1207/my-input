@@ -1,0 +1,6 @@
+${%begin}
+${:STMT}
+case ${:EXPR}:
+${%end}
+f();
+

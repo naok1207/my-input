@@ -1,0 +1,142 @@
+# 
+# Copyright (c) 2009-2020 The TEBA Project. All rights reserved.
+# 
+# Redistribution and use in source, with or without modification, are
+# permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+# 
+# Author: Atsuhi Yoshida
+
+
+##### extern "C" for C++ #####
+{ $e:ID_TPCS/extern/ $sp:SP $c:LIS/"C"/ } => { $e $sp $c:ID_TPCS }
+# This rules should be here for avoid following rules treat "C" as a string.
+
+# gcc and glib specials
+# weak_alias, strong_alias
+{ $id:IDN/(?:weak|strong)_alias/ $sp:SP $pl#1:P_L $any:ANY $pr#1:P_R }
+=> { $id $sp $pl $any $pr '':SC }
+
+@SPR  => "(?:SP_[BC].*+\n)*+"
+@LINETOP => "(?:(?:UNIT_BEGIN|SP_NL)\s.*+\n)"
+@MACRO_IDENT => "IDN\s+<[A-Z0-9_]+>\n"
+@INVALID0 => "(?:RE_|UNIT).*+\n"
+@INVALID1 => "(?:ID_TP|CT|RE_|C_R|UNIT).*+\n"
+@INVALID2 => "(?:CT|RE_(?:L|JP)|C_L|B|UNIT).*+\n"
+# note: B_DIRE exists because this filter is applied after prep.rules.
+
+# for GNULIB
+@GNULIB_IDENT => "IDN\s+<\@[A-Z0-9_]+\@>\n"
+{ $top:LINETOP $sp0:SPR $name:GNULIB_IDENT $sp1:SPR $nl:SP_NL }
+=>>  { $top $sp0 $name '':SC $sp1 $nl}
+# GNULIB uses specail marks, such as "@PROGRAM_SYSTEM_HEADER@,
+# to replace with directives.
+
+# Typical structures
+{ $top:LINETOP $sp0:SPR $name:IDN $[arg: $#1:P_L '(?>':X $:ANY $#1:P_R ')':X $]?
+  $sp1:SPR $nl:SP_NL
+  $[empty: $[: $:_DIRE $]? $:SPR $:SP_NL $]*
+  $inv:INVALID0 }
+=>>  { $top $sp0 $name $arg '':SC $sp1 $nl $empty $inv }
+
+# macrocalls with args.
+{ $top:LINETOP $sp0:SPR $name:IDN $sp1:SPR
+  $pl#1:P_L '(?>':X $arg:ANY $pr#1:P_R ')':X $sp2:SPR $nl:SP_NL 
+  $sp3:SPR $[lines: $:INVALID1 $| $[: $:_DIRE $:SPR $]? $:SP_NL
+    $sp4:SPR $[: $:INVALID1 $| $[: $:_DIRE $:SPR $]? $:SP_NL $]  $] }
+=>>  { $top $sp0 $name $sp1 $pl $arg $pr '':SC $sp2 $nl $sp3 $lines }
+
+# macrocalls without args whose name is in uppercase, ex. "FOO".
+# The condition for identification is two blank lines or
+#  a blank line which separate two identifiers.
+{ $top:LINETOP $sp0:SPR $name:MACRO_IDENT $sp1:SPR $nl1:SP_NL
+  $[dire: $:_DIRE $:SP_NL $]* $sp2:SPR $nl2:SP_NL
+  $sp3:SPR $[tail: $:SP_NL $| $:IDN $| $:SP $inv:INVALID2 $] }
+=>>  { $top $sp0 $name '':SC $sp1 $nl1 $dire $sp2 $nl2 $sp3 $tail }
+
+# macrocalls following literals. (enum in coreutils-8.22/lib/mbsalign.h)
+{ $li:/LI\w/ $sp1:SPR $nl1:SP_NL $[nl2: $[: $:_DIRE $| $:SPR $] $:SP_NL $]+
+  $sp2:SPR $name:MACRO_IDENT }
+=> { $li '':SC $sp1 $nl1 $nl2 $sp2 $name }
+
+# Forcefull error tokens with #error
+# Ex. "choke me" in coreutils-8.16/gnulib-tests/test-math.c.
+{ $[err: $:B_DIRE $:PRE_TOP $:SP $:PRE_DIR/error/
+         '(?>':X $:ANY $:E_DIRE ')':X $:SP_NL $]
+  $[msg: $:/[^SBE]\w+|SC/ $:SPR $]+? $nl:SP_NL
+  $[end: $:B_DIRE $:PRE_TOP $:SP $:PRE_DIR/endif/ $:E_DIRE $]
+} => { $err '':_B_EM $msg '':_E_EM '':SC $nl $end }
+
+## Illegal strings, whose purpose is a compile error for specific conditions.
+#  Ex. "HEAD_TAIL_PIPE_BYTECOUNT_THRESHOLD must be at least 2 * READ_BUFSIZE"
+#       in coreutils-8.16/src/head.c
+{ $top:LINETOP $sp0:SPR $str:LIS $sp1:SPR $nl:SP_NL
+  $[line1: $[: $:_DIRE $:SPR $]? $:SP_NL $]
+  $[line2: $:SPR $[: $:SP_NL $| $:SP $[: $:INVALID1 $| $:_B_EM $] $] $] }
+=>>  { $top $sp0 '':_B_EM $str '':_E_EM $sp1 '':SC $nl $line1 $line2 }
+
+#  Ex. "invalid UTIME macros" in coreutils-8.16/gnulib-tests/test-sys_stat.c
+#  Ex. "missing or broken *_FILENO macros"
+#       in coreutils-8.16/gnulib-tests/test-unistd.c
+#  Ex. "you lose .... " in coreutils-8.16/lib/alloca.c
+# The follwoing definition should be conservative.
+{ $[if: $:B_DIRE $:PRE_TOP $:SPR $:PRE_DIR/ifn?(?:def)?/
+         '(?>':X $:ANY $:E_DIRE ')':X $:SPR $:SP_NL $]
+  $sp1:SPR $[msg: $:IDN $:SP $:/IDN/ $[: $:SP $:/IDN|OP/ $]+ $:SPR $] $nl:SP_NL
+  $[sp2: $:/SP_\w+/ $]*
+  $[end1: $:SPR $:B_DIRE $:PRE_TOP $:SPR $:PRE_DIR/endif/ $:SPR $:E_DIRE $] $nl1:SP_NL
+  $[end2: $:SPR $:B_DIRE $:PRE_TOP $:SPR $:PRE_DIR/endif/ $:SPR $:E_DIRE $]? $nl2:SP_NL
+} => { $if $sp1 '':_B_EM $msg '':_E_EM '':SC $nl $sp2 $end1 $nl1 $end2 $nl2 }
+
+# concatenate error message tokens to a token typed as ID_MSG.
+{ $b:_B_EM $x:/[^_]\w+/ $y:/[^_]\w+/ } =>> { $b $x $## $y }
+{ $b:_B_EM $x:/[^_]\w+/ $e:_E_EM } => { $x:ID_MSG }
+# Though ID_MSG is not identifier, it should be treated as an expression
+# for recognizing statement border.
+
+## Note:
+# coreutils-8.16/lib/strftime.c
+# STRFTIME_ARG() is not followed a comma, and identified as a statement.
+# Change empty SCs in parentheses to empty CA.
+{ $e:RE_SUE/enum/ $sp:SP $[tag: $:IDN $:SP $]?
+  $cl#1:C_L '(?>':X $any:ANY $cr#1:C_R ')':X }
+=> { $e $sp $tag '':P_L $cl $any $cr '':P_R }
+@|CParser->SCtoCA|
+{ $:P_L// $cl:C_L } => { $cl }
+{ $cr:C_R $:P_R// } => { $cr }
+
+# The rules for parsing in macro definition. do-while() may appear in
+# arguments of macro defs. ex.the macro "cpy" in coreutils-8.16/lib/strftime.c
+# The following rules are special for cpy in strftime.c.
+{ $ctrl:CT_BE/while/ $sp1:SP $pl#p:P_L '(?>':X $cond:ANY $pr#p:P_R ')':X
+  $sp2:SP $pr2:P_R}
+=> { $ctrl $sp1 $pl $cond $pr '':SC $sp2 $pr2 }
+{ $else:CT_EL $sp:SP $[call: $:IDN $:SP $#p:P_L '(?>':X $:ANY $#p:P_R ')':X $]
+  $pr:P_R }
+=> { $else $sp $call '':SC $pr }
+
+
+# Experimental code:
+# Control statements in macro args without semicolons.
+# AddRelcacheInvalidationMessage() in
+#                     postgresql-9.3.5/src/backend/utils/cache/inval.c
+# This code inserts unnecessary SC in the case of "f({if (c) g()});
+#{ $pl#1:P_L '(?>':X $e:ANY $if:/CT_\w+/ ')':X $s:ANY $pr#1:P_R }
+#=> { $pl $e $if $s '':SC $pr }
+#{ $sc:SC $sp:SP $:SC// } => { $sc $sp }
