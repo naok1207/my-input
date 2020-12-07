@@ -38,5 +38,14 @@ module MyInput
       g.helper false
     end
     config.time_zone = 'Tokyo'
+
+    config.middleware.insert_before 0, Rack::Cors do
+      allow do
+        origins "*"
+        resource "*",
+          headers: :any,
+          methods: [:get, :post, :options, :head]
+      end
+    end
   end
 end
