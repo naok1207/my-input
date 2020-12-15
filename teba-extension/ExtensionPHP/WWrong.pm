@@ -9,7 +9,7 @@ use Data::Dumper;
 my $LIB;
 
 use RewriteTokens;
-use Diff 'diff';
+use Text::Diff;
 use Wrong;
 
 
