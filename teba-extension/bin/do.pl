@@ -55,8 +55,7 @@ if (!@tk || $tk[0] !~ /OK/){
   exit(0);
 }
 
-
-my $expr = &CommonModel::expr_checker($lang, $wrong);
+my $expr = &CommonModel::expr_checker($lang, @tk);
 
 my @model;
 my @count;
@@ -85,7 +84,14 @@ $to_code =~ s/\n//;
 # print
 $json_text = {
   ok => "true",
-  message => $from_lang . "っぽい",
+  messages => [
+    {
+      message => $from_lang . "っぽい",
+    },
+    {
+      message => $expr,
+    }
+  ],
   from => { language => $from_lang, code => $code },
   to => { language => $lang, code => $to_code }
 };

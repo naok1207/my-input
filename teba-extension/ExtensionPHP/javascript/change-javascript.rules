@@ -1,36 +1,27 @@
 # IF_model
 { $:MODEL/IF/ $:B_COND $cond:ANY $:E_COND }
-=> { 'if':CT_IF '(':P_R $cond:COND ')':P_L '{':C_L }
+=> { 'if':CT_IF ' ':SP_B '(':P_L $cond:COND ')':P_R ' ':SP_B '{':C_L }
 
 # ELSEIF_model
 { $:MODEL/ELSEIF/ $:B_COND $cond:ANY $:E_COND }
-=> { 'else':CT_EL ' ':SP_B 'if':CT_IF '(':P_R $cond:COND ')':P_R '{':C_L }
+=> { 'else':CT_EL ' ':SP_B 'if':CT_IF '(':P_L $cond:COND ')':P_R ' ':SP_B '{':C_L }
 
 # ELSE_model
 { $:MODEL/ELSE/ }
-=> { 'else':CT_EL '{':C_L }
+=> { 'else':CT_EL ' ':SP_B '{':C_L }
 
 # WHILE_model
 { $:MODEL/WHILE/ $:B_COND $cond:ANY $:E_COND }
-=> { 'while':CT_BE '(':P_R $cond:COND ')':P_L '{':C_L }
+=> { 'while':CT_BE ' ':SP_B '(':P_L $cond:COND ')':P_R ' ':SP_B '{':C_L }
 
 # FOR_model(end_NOT_include)
 { $:MODEL/FOR/ $var:VAR $:B_INI $ini:ANY $:E_INI $:B_END $end:ANY $:E_END $:END_INCLUDE/False/ }
-  => {'for':CT_BE '(':P_L $var:ID_C '=':OP $ini:INI ';':SC $var:ID_C '<':OP $end:END ';':SC $var:ID_C '++':OP ')':P_R '{':C_L}
+=> {'for':CT_BE ' ':SP_B '(':P_L $var:ID_C '=':OP $ini:INI ';':SC $var:ID_C '<':OP $end:END ';':SC $var:ID_C '++':OP ')':P_R ' ':SP_B '{':C_L}
 
 # FOR_model(end_include)
 { $:MODEL/FOR/ $var:VAR $:B_INI $ini:ANY $:E_INI $:B_END $end:ANY $:E_END $:END_INCLUDE/True/ }
-   => {'for':CT_BE '(':P_L $var:ID_C '=':OP $ini:INI ';':SC $var:ID_C '<=':OP $end:END ';':SC $var:ID_C '++':OP ')':P_R '{':C_L}
+=> {'for':CT_BE ' ':SP_B '(':P_L $var:ID_C '=':OP $ini:INI ';':SC $var:ID_C '<=':OP $end:END ';':SC $var:ID_C '++':OP ')':P_R ' ':SP_B '{':C_L}
 
 # FOREACH_model
 { $:MODEL/FOREACH/ $var:VAR $:B_ARR $array:ANY $:E_ARR}
- => {'for':CT_BE '(':P_L $var:ID_C ' ':SP_B 'of':OF ' ':SP_B $array:ID_C ')':P_R '{':C_L }
-
-
-#expr translate
-{ $:OP/==/ } => { '===':OP }
-{ $:OP/!=/ } => { '!==':OP }
-{ $:OP/and/ } => { '&&':OP }
-{ $:OP/or/  } => { '\|\|':OP }
-{ $x:ID_C/\$/ $## $y:ID_C/\w+/ } => { $y:ID_C }
-{ $x:ID_V/\$/ $## $y:ID_V/\w+/ } => { $y:ID_C }
+=> {'for':CT_BE ' ':SP_B '(':P_L $var:ID_C ' ':SP_B 'of':OF ' ':SP_B $array:ID_C ')':P_R ' ':SP_B '{':C_L }

@@ -1,28 +1,27 @@
 # IF_model
-{ '':LANG $:MODEL/IF/ $:B_COND $cond:ANY $:E_COND }
-=> { 'で書かれていました':MES '\n':SP_NL 'if':CT_IF '(':P_R $cond:COND ')':P_L '{':C_L '\n':SP_NL }
+{ $:MODEL/IF/ $:B_COND $cond:ANY $:E_COND }
+=> { 'if':CT_IF '(':P_R $cond:COND ')':P_L '{':C_L }
 
 # ELSEIF_model
-{ '':LANG $:MODEL/ELSEIF/ $:B_COND $cond:ANY $:E_COND }
-=> { 'で書かれていました':MES '\n':SP_NL 'elseif':CT_EIF '(':P_R $cond:COND ')':P_R '{':C_L '\n':SP_NL }
+{ $:MODEL/ELSEIF/ $:B_COND $cond:ANY $:E_COND }
+=> { 'elseif':CT_EIF '(':P_R $cond:COND ')':P_R '{':C_L }
 
 # ELSE_model
-{ '':LANG $:MODEL/ELSE/ }
-=> { 'で書かれていました':MES '\n':SP_NL 'else':CT_EL '{':C_L '\n':SP_NL }
+{ $:MODEL/ELSE/ }
+=> { 'else':CT_EL '{':C_L }
 
 # WHILE_model
-{ '':LANG $:MODEL/WHILE/ $:B_COND $cond:ANY $:E_COND }
-=> { 'で書かれていました':MES '\n':SP_NL 'while':CT_BE '(':P_R $cond:COND ')':P_L '{':C_L '\n':SP_NL }
+{ $:MODEL/WHILE/ $:B_COND $cond:ANY $:E_COND }
+=> { 'while':CT_BE '(':P_R $cond:COND ')':P_L '{':C_L }
 
 # FOR_model(end_NOT_include)
-{ '':LANG $:MODEL/FOR/ $var:VAR $:B_INI $ini:ANY $:E_INI $:B_END $end:ANY $:E_END $:END_INCLUDE/False/ }
-  => { 'で書かれていました':MES '\n':SP_NL 'for':CT_BE '(':P_L $var:ID_V '=':OP $ini:INI ';':SC $var:ID_V '<':OP $end:END ';':SC $var:ID_V '++':OP ')':P_R '{':C_L '\n':SP_NL}
+{ $:MODEL/FOR/ $var:VAR $:B_INI $ini:ANY $:E_INI $:B_END $end:ANY $:E_END $:END_INCLUDE/False/ }
+  => {'for':CT_BE '(':P_L $var:ID_V '=':OP $ini:INI ';':SC $var:ID_V '<':OP $end:END ';':SC $var:ID_V '++':OP ')':P_R '{':C_L}
 
 # FOR_model(end_include)
-{ '':LANG $:MODEL/FOR/ $var:VAR $:B_INI $ini:ANY $:E_INI $:B_END $end:ANY $:E_END $:END_INCLUDE/True/ }
-   => { 'で書かれていました':MES '\n':SP_NL 'for':CT_BE '(':P_L $var:ID_V '=':OP $ini:INI ';':SC $var:ID_V '<=':OP $end:END ';':SC $var:ID_V '++':OP ')':P_R '{':C_L '\n':SP_NL}
+{ $:MODEL/FOR/ $var:VAR $:B_INI $ini:ANY $:E_INI $:B_END $end:ANY $:E_END $:END_INCLUDE/True/ }
+   => {'for':CT_BE '(':P_L $var:ID_V '=':OP $ini:INI ';':SC $var:ID_V '<=':OP $end:END ';':SC $var:ID_V '++':OP ')':P_R '{':C_L}
 
 # FOREACH_model
-{ '':LANG $:MODEL/FOREACH/ $var:VAR $array:ARRAY }
- => { 'で書かれていました':MES '\n':SP_NL 'foreach':CT_BE '(':P_L' $array:ID_V 'as':AS $var:ID_V )':P_R '{':C_L '\n':SP_NL }
-
+{ $:MODEL/FOREACH/ $var:VAR $:B_ARR $array:ANY $:E_ARR }
+ => {'foreach':CT_BE '(':P_L $array:ID_V ' ':SP_B 'as':AS ' ':SP_B $var:ID_V ')':P_R '{':C_L }

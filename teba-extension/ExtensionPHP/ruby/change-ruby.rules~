@@ -1,28 +1,28 @@
 # IF_model
-{ $:LANG $:MODEL/IF/ $:B_COND $cond:ANY $:E_COND }
-=> { 'if':CT_IF ' ':SP_B $cond:COND ' ':SP_B 'then':THEN '\n':SP_NL }
+{  $:MODEL/IF/ $:B_COND $cond:ANY $:E_COND }
+=> { 'if':CT_IF ' ':SP_B $cond:COND ' ':SP_B 'then':THEN }
 
 # ELSEIF_model
-{ $:LANG $:MODEL/ELSEIF/ $:B_COND $cond:ANY $:E_COND }
-=> { 'elsif':CT_EIF ' ':SP_B $cond:COND ' ':SP_B 'then':THEN '\n':SP_NL }
+{  $:MODEL/ELSEIF/ $:B_COND $cond:ANY $:E_COND }
+=> { 'elsif':CT_EIF ' ':SP_B $cond:COND ' ':SP_B 'then':THEN }
 
 # ELSE_model
-{ $:LANG $:MODEL/ELSE/ }
-=> { 'else':CT_EL '\n':SP_NL }
+{  $:MODEL/ELSE/ }
+=> { 'else':CT_EL }
 
 # WHILE_model
-{ $:LANG $:MODEL/WHILE/ $:B_COND $cond:ANY $:E_COND }
-=> { 'while':CT_BE ' ':SP_B $cond:COND ' ':SP_B 'do':CT_DO '\n':SP_NL }
+{  $:MODEL/WHILE/ $:B_COND $cond:ANY $:E_COND }
+=> { 'while':CT_BE ' ':SP_B $cond:COND ' ':SP_B 'do':CT_DO }
 
 # FOR_model(end_NOT_include)
-{ $:LANG $:MODEL/FOR/ $var:VAR $:B_INI $ini:ANY $:E_INI $:B_END $end:ANY $:E_END $:END_INCLUDE/False/ }
-=> {'for':CT_BE ' ':SP_B $var:ID_C ' ':SP 'in':IN ' ':SP_B $ini:INI '...':OP_Y $end:END ' ':SP_B 'do':CT_DO '\n':SP_NL }
+{  $:MODEL/FOR/ $var:VAR $:B_INI $ini:ANY $:E_INI $:B_END $end:ANY $:E_END $:END_INCLUDE/False/ }
+=> {'for':CT_BE ' ':SP_B $var:ID_C ' ':SP 'in':IN ' ':SP_B $ini '...':OP_Y $end ' ':SP_B 'do':CT_DO }
 
 # FOR_model(end_include)
-{ $:LANG $:MODEL/FOR/ $var:VAR $:B_INI $ini:ANY $:E_INI $:B_END $end:ANY $:E_END $:END_INCLUDE/True/ }
-=> {'for':CT_BE ' ':SP_B $var:ID_C ' ':SP 'in':IN ' ':SP_B $ini:INI '..':OP_X $end:END ' ':SP_B 'do':CT_DO '\n':SP_NL }
+{  $:MODEL/FOR/ $var:VAR $:B_INI $ini:ANY $:E_INI $:B_END $end:ANY $:E_END $:END_INCLUDE/True/ }
+=> {'for':CT_BE ' ':SP_B $var:ID_C ' ':SP 'in':IN ' ':SP_B $ini:INI '..':OP_X $end:END ' ':SP_B 'do':CT_DO }
 
 # FOREACH_model
-{ $:LANG $:MODEL/FOREACH/ $var:VAR $array:ARRAY }
-=> { 'for':CT_BE ' ':SP_B $var:ID_C ' ':SP_B 'in':IN ' ':SP_B $array:ID_C ' ':SP_B 'do':CT_DO '\n':SP_NL }
+{ $:MODEL/FOREACH/ $var:VAR $:B_ARR $array:ANY $:E_ARR}
+=> { 'for':CT_BE ' ':SP_B $var:ID_C ' ':SP_B 'in':IN ' ':SP_B $array:ID_C ' ':SP_B 'do':CT_DO }
 
