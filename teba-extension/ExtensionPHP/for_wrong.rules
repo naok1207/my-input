@@ -1,82 +1,83 @@
-##forを削除
+#接頭辞を削除
+#forを削除
 { $:CT_BE/for/ $:SP $any:ANY }
  => { '':MODEL '':_C $any}
 
-##forを削除
+#forを削除
 { $:CT_BE/foreach/ $:SP $any:ANY $:SP_NL}
  => { '':MODEL '':_C $any '\n':SP_NL 'P':CNT }
 
 ##条件式のくくり
-#( )有り 文末にdoやら:
+#( )あり かつ 文末にdoや：などの文の開始記号あり
 { $model:MODEL $:_C $#1:P_L $expr:ANY $#1:P_R $:SP $b_stmt:/(CT_DO|THEN|CO|C_L)/ $stmt:ANY $:SP_NL }
  => { '':_ONE $model:MODEL '':B_EXPR $expr '':E_EXPR '':B_STMT $b_stmt $stmt '':E_STMT '\n':SP_NL 'CJP':CNT}
 
-#( )無 文末にdoやら:
+#( )なし かつ 文末に文の開始記号あり
 { $model:MODEL $:_C $expr:ANY $:SP $b_stmt:/(CT_DO|THEN|CO|C_L)/ $stmt:ANY $:SP_NL }
  =>{ '':_ONE $model:MODEL '':B_EXPR $expr '':E_EXPR '':B_STMT $b_stmt $stmt '':E_STMT '\n':SP_NL 'YR':CNT}
 
-#( )を削除
+#( )あり かつ 文末に文の開始記号がない
 { $model:MODEL $:_C $#2:P_L $expr:ANY $#2:P_R $stmt:ANY $:SP_NL}
  => { '':_ONE $model:MODEL '':B_EXPR $expr '':E_EXPR '':B_STMT $stmt '':E_STMT '\n':SP_NL 'CJP':CNT}
 
- #( )の有無を確認 文末は空
+ #( )なし かつ 文末に文の開始記号がない
 { $model:MODEL  $:_C $expr:ANY $:SP_NL }
 =>{ '':_ONE $model:MODEL '':B_EXPR $expr '':E_EXPR '':B_STMT '':E_STMT '\n':SP_NL 'R':CNT}
 
-##条件式をチェック
-#条件式がC,PHP,JS op:< var++
+##条件式をチェックし,モデルを決定
+#条件式がC,PHP,JS 終了値を含まず,var++でインクリメント
 { $:MODEL $:B_EXPR $:SP
   $#2:B_P
-  $#5:B_P $var:/ID_(C|F)/ $#5:E_P $:SP
+  $#5:B_P $var:/ID_(C|V)/ $#5:E_P $:SP
   $:OP/=/ $:SP
   $#6:B_P $ini:ANY $#6:E_P
   $#2:E_P $:SP $:/(SC|FSC)/ $:SP
   $#3:B_P
-  $#7:B_P $var:/ID_(C|F)/ $#7:E_P $:SP
+  $#7:B_P $var:/ID_(C|V)/ $#7:E_P $:SP
   $:OP/</ $:SP
   $#8:B_P $end:ANY $#8:E_P
   $#3:E_P $:SP $:/(SC|FSC)/ $:SP
   $#4:B_P
-  $#9:B_P $var:/ID_(C|F)/ $#9:E_P $:SP
+  $#9:B_P $var:/ID_(C|V)/ $#9:E_P $:SP
   $:OP/\+\+/ $:SP $#4:E_P $:SP 
   $:E_EXPR $:B_STMT $stmt:ANY $:E_STMT $:SP_NL }
   =>{ '':_TWO 'FOR':MODEL $var:VAR '':B_INI $ini '':E_INI '':B_END $end '':E_END 'False':END_INCLUDE '':B_STMT $stmt '':E_STMT '\n':SP_NL 'CCCJJJPPP':CNT}
 
-#条件式がC,PHP,JS op:<= var++
+#条件式がC,PHP,JS 終了値を含み,var++でインクリメント
 { $:MODEL $:B_EXPR $:SP
   $#2:B_P
-  $#5:B_P $var:/ID_(C|F)/ $#5:E_P $:SP
+  $#5:B_P $var:/ID_(C|V)/ $#5:E_P $:SP
   $:OP/=/ $:SP
   $#6:B_P $ini:ANY $#6:E_P
   $#2:E_P $:SP $:/(SC|FSC)/ $:SP
   $#3:B_P
-  $#7:B_P $var:/ID_(C|F)/ $#7:E_P $:SP
+  $#7:B_P $var:/ID_(C|V)/ $#7:E_P $:SP
   $:OP/<=/ $:SP
   $#8:B_P $end:ANY $#8:E_P
   $#3:E_P $:SP $:/(SC|FSC)/ $:SP
   $#4:B_P
-  $#9:B_P $var:/ID_(C|F)/ $#9:E_P $:SP
+  $#9:B_P $var:/ID_(C|V)/ $#9:E_P $:SP
   $:OP/\+\+/ $:SP $#4:E_P $:SP 
   $:E_EXPR $:B_STMT $stmt:ANY $:E_STMT $:SP_NL }
   =>{ '':_TWO 'FOR':MODEL $var:VAR '':B_INI $ini '':E_INI '':B_END $end '':E_END 'True':END_INCLUDE '':B_STMT $stmt '':E_STMT '\n':SP_NL 'CCCJJJPPP':CNT}
 
-#条件式がC,PHP,JS op:< var=var+1
+#条件式がC,PHP,JS 終了値を含まず,var=var+1でインクリメント
 { $:MODEL $:B_EXPR $:SP
   $#2:B_P
-  $#5:B_P $var:/ID_(C|F)/ $#5:E_P $:SP
+  $#5:B_P $var:/ID_(C|V)/ $#5:E_P $:SP
   $:OP/=/ $:SP
   $#6:B_P $ini:ANY $#6:E_P
   $#2:E_P $:SP $:/(SC|FSC)/ $:SP
   $#3:B_P
-  $#7:B_P $var:/ID_(C|F)/ $#7:E_P $:SP
+  $#7:B_P $var:/ID_(C|V)/ $#7:E_P $:SP
   $:OP/</ $:SP
   $#8:B_P $end:ANY $#8:E_P
   $#3:E_P $:SP $:/(SC|FSC)/ $:SP
   $#4:B_P
-  $#9:B_P $var:/ID_(C|F)/ $#9:E_P $:SP
+  $#9:B_P $var:/ID_(C|V)/ $#9:E_P $:SP
   $:OP/=/ $:SP
   $#12:B_P
-  $#13:B_P $var:/ID_(C|F)/ $#13:E_P $:SP
+  $#13:B_P $var:/ID_(C|V)/ $#13:E_P $:SP
   $:OP/\+/ $:SP
   $#14:B_P $:LIN/1/ $#14:E_P
   $#12:E_P
@@ -84,23 +85,23 @@
   $:E_EXPR $:B_STMT $stmt:ANY $:E_STMT $:SP_NL }
   =>{ '':_TWO 'FOR':MODEL $var:VAR '':B_INI $ini '':E_INI '':B_END $end '':E_END 'False':END_INCLUDE '':B_STMT $stmt '':E_STMT '\n':SP_NL 'CCCJJJPPP':CNT}
 
-#条件式がC,PHP,JS op:< var=var+1
+#条件式がC,PHP,JS 終了値を含み,var=var+1でインクリメント
 { $:MODEL $:B_EXPR $:SP
   $#2:B_P
-  $#5:B_P $var:/ID_(C|F)/ $#5:E_P $:SP
+  $#5:B_P $var:/ID_(C|V)/ $#5:E_P $:SP
   $:OP/=/ $:SP
   $#6:B_P $ini:ANY $#6:E_P
   $#2:E_P $:SP $:/(SC|FSC)/ $:SP
   $#3:B_P
-  $#7:B_P $var:/ID_(C|F)/ $#7:E_P $:SP
+  $#7:B_P $var:/ID_(C|V)/ $#7:E_P $:SP
   $:OP/<=/ $:SP
   $#8:B_P $end:ANY $#8:E_P
   $#3:E_P $:SP $:/(SC|FSC)/ $:SP
   $#4:B_P
-  $#9:B_P $var:/ID_(C|F)/ $#9:E_P $:SP
+  $#9:B_P $var:/ID_(C|V)/ $#9:E_P $:SP
   $:OP/=/ $:SP
   $#12:B_P
-  $#13:B_P $var:/ID_(C|F)/ $#13:E_P $:SP
+  $#13:B_P $var:/ID_(C|V)/ $#13:E_P $:SP
   $:OP/\+/ $:SP
   $#14:B_P $:LIN/1/ $#14:E_P
   $#12:E_P
@@ -111,16 +112,15 @@
 
 #条件式がPython range(end)
 { $:MODEL $:B_EXPR 
-  $#1:B_P $var:/ID_(C|F)/ $#1:E_P
+  $#1:B_P $var:/ID_(C|V)/ $#1:E_P
   $:SP_B $:IN $:SP_B $:RANGE
    $#2:B_P $:P_L $:SP $#3:B_P $end:ANY $#3:E_P $:SP $:P_R $#2:E_P $:SP
   $:E_EXPR $:B_STMT $stmt:ANY $:E_STMT $:SP_NL }
   =>{ '':_TWO 'FOR':MODEL $var:VAR '':B_INI '0':LIN '':E_INI '':B_END $end '':E_END 'False':END_INCLUDE '':B_STMT $stmt '':E_STMT '\n':SP_NL 'YYY':CNT}
 
 #条件式がPython range(ini,end)
-#range(1,n+1)が通らん
 { $:MODEL $:B_EXPR 
-  $#1:B_P $var:/ID_(C|F)/ $#1:E_P
+  $#1:B_P $var:/ID_(C|V)/ $#1:E_P
   $:SP $:IN $:SP $:RANGE
   $#2:B_P $:P_L $:SP $#3:B_P $ini:ANY $#3:E_P $:SP
   $:CA
@@ -131,7 +131,7 @@
 
 #条件式がRuby ini...end
 { $:MODEL $:B_EXPR 
-  $#1:B_P $var:/ID_(C|F)/ $#1:E_P
+  $#1:B_P $var:/ID_(C|V)/ $#1:E_P
   $:SP $:IN $:SP
   $#2:B_P $ini:ANY $#2:E_P $:SP
   $:OP_X $:SP
@@ -141,7 +141,7 @@
 
 #条件式がRuby ini..end
 { $:MODEL $:B_EXPR 
-  $#1:B_P $var:/ID_(C|F)/ $#1:E_P
+  $#1:B_P $var:/ID_(C|V)/ $#1:E_P
   $:SP $:IN $:SP
   $#2:B_P $ini:ANY $#2:E_P $:SP
   $:OP_Y $:SP
@@ -149,25 +149,26 @@
   $:E_EXPR $:B_STMT $stmt:ANY $:E_STMT $:SP_NL }
   => { '':_TWO 'FOR':MODEL $var:VAR '':B_INI $ini '':E_INI '':B_END $end '':E_END 'True':END_INCLUDE '':B_STMT $stmt '':E_STMT '\n':SP_NL 'R':CNT}
 
-#条件式がJSの foreach
+#条件式がJavaScriptで,FOREACHモデルになるもの
 { $:MODEL $:B_EXPR 
-  $#2:B_P $var:/ID_(C|F)/ $#2:E_P $:SP
+  $#2:B_P $var:/ID_(C|V)/ $#2:E_P $:SP
   $:OF $:SP
   $[expr: $#4:B_P $:ANY $#4:E_P $] $:SP 
   $:E_EXPR $:B_STMT $stmt:ANY $:E_STMT $:SP_NL }
   => { '':_TWO 'FOREACH':MODEL $var:VAR '':B_ARR $expr '':E_ARR '':B_STMT $stmt '':E_STMT '\n':SP_NL 'JJJ':CNT }
 
-#条件式がPHPの foreach
+#条件式がPHPで,FOREACHモデルになるもの
 { $:MODEL $:B_EXPR $#1:B_P
   $[expr: $#4:B_P $:ANY $#4:E_P $] $:SP
   $:OP/as/ $:SP
-  $#2:B_P $var:/ID_(C|F)/ $#2:E_P $:SP 
+  $#2:B_P $var:/ID_(C|V)/ $#2:E_P $:SP 
   $#1:E_P $:E_EXPR $:B_STMT $stmt:ANY $:E_STMT $:SP_NL }
   => { '':_TWO 'FOREACH':MODEL $var:VAR '':B_ARR $expr '':E_ARR '':B_STMT $stmt '':E_STMT '\n':SP_NL 'PPP':CNT }
 
-#条件式がPythonのforeach
+
+#条件式がPythonで,FOREACHモデルになるもの
 { $:MODEL $:B_EXPR
-  $#1:B_P $var:/ID_(C|F)/ $#1:E_P
+  $#1:B_P $var:/ID_(C|V)/ $#1:E_P
   $:SP $:IN $:SP
   $[expr: $#3:B_P $:ANY $#3:E_P $] $:SP 
   $:E_EXPR $:B_STMT $stmt:ANY $:E_STMT $:SP_NL }
@@ -192,5 +193,5 @@
   => { '':_THREE $model:MODEL $any '\n':SP_NL 'CPJR':CNT }
 
 #完全なモデル?
-{$:_ONE $:_TWO $:_THREE}
- => { '':OK }
+{$any:ANY $:_ONE $:_TWO $:_THREE}
+ => { '':OK $any}

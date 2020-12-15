@@ -1,10 +1,11 @@
+##接頭辞を削除し,モデル決定
 #else ifを削除
 { $:CT_EL $:SP_B $:CT_IF $:SP $any:ANY $:SP_NL}
  => { '':_ONE 'ELSEIF':MODEL '':_C $any '\n':SP_NL 'CCCJJJPPP':CNT }
 
 #elseを削除
 { $:CT_EL $any:ANY $:SP_NL }
- =>{ '':_OONE 'ELSE':MODEL '':B_STMT $any '':E_STMT '\n':SP_NL}
+ =>{ '':_E_ONE 'ELSE':MODEL '':B_STMT $any '':E_STMT '\n':SP_NL}
 
 #ifを削除
 { $:CT_IF/if/ $:SP $any:ANY }
@@ -23,25 +24,25 @@
  => { '':_ONE 'ELSEIF':MODEL '':_C $any '\n':SP_NL 'YYY':CNT}
 
 ##条件式のくくり
-#( )有り 文末にdoやら： elseif ver
+#( )あり かつ 文末にdoや：などの文の開始記号あり elseif ver
 {$model:MODEL $:_C $#2:P_L $cond:ANY $#2:P_R $:SP $op:/(CT_DO|THEN|CO|C_L)/ $stmt:ANY $:SP_NL }
  =>{ '':_TWO $model:MODEL '':B_COND $cond '':E_COND '':B_STMT $op $stmt '':E_STMT '\n':SP_NL 'CJP':CNT}
 
-#( )有り 文末にdoやら： elseif以外ver
+#( )あり かつ 文末にdoや：などの文の開始記号ありelseif以外ver
 {$model:MODEL $:_C $#1:B_P $#2:P_L $cond:ANY $#2:P_R $#1:E_P $:SP $op:/(CT_DO|THEN|CO|C_L)/ $stmt:ANY $:SP_NL }
  =>{ '':_TWO $model:MODEL '':B_COND $cond '':E_COND '':B_STMT $op $stmt '':E_STMT '\n':SP_NL 'CJP':CNT}
 
-#( )の有無を確認 文末にdoやら:
+#( )なし かつ 文末に文の開始記号あり
 {$model:MODEL  $:_C $cond:ANY $:SP $op:/(CT_DO|THEN|CO|C_L)/ $stmt:ANY $:SP_NL }
  =>{ '':_TWO $model:MODEL '':B_COND $cond '':E_COND '':B_STMT $op $stmt '':E_STMT '\n':SP_NL 'YR':CNT}
 
-#( )を削除
+#( )あり かつ 文末に文の開始記号がない
 {$model:MODEL $:_C $#1:B_P $#2:P_L $cond:ANY $#2:P_R $#1:E_P $stmt:ANY $:SP_NL}
  => { '':_TWO $model:MODEL '':B_COND $cond '':E_COND '':B_STMT $stmt '':E_STMT '\n':SP_NL 'CJP':CNT}
 
-#( )の有無を確認 文末は空
+#( )なし かつ 文末に文の開始記号がない
 {$model:MODEL  $:_C $cond:ANY $:SP_NL }
- =>{ '':_TWO $model:MODEL '':B_COND $cond '':E_COND ''B_STMT '':E_STMT '\n':SP_NL 'R':CNT}
+ =>{ '':_TWO $model:MODEL '':B_COND $cond '':E_COND '':B_STMT '':E_STMT '\n':SP_NL 'R':CNT}
 
 
 ##文チェック
@@ -62,8 +63,9 @@
   => { '':_THREE $model:MODEL $any '\n':SP_NL 'CPJR':CNT }
 
 #完全なモデル?
-{$:_ONE $:_TWO $:_THREE}
- => { '':OK }
+{$any:ANY $:_ONE $:_TWO $:_THREE}
+ => { '':OK $any}
 
- {$:_OONE $:_THREE }
- => { '':OK }
+#完全なELSEモデル?
+ {$any:ANY $:_E_ONE $:_THREE }
+ => { '':OK $any}
