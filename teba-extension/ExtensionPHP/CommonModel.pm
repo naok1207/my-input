@@ -10,7 +10,6 @@ my $LIB;
 use RewriteTokens;
 use Text::Diff 'diff';
 
-
 # パッケージを有効化するため
 BEGIN {
     ($LIB = $INC{__PACKAGE__ . ".pm"}) =~ s/[^\/]+$//;

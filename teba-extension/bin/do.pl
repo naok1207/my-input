@@ -5,8 +5,6 @@ use warnings;
 use FindBin qw($Bin);
 use lib ("$Bin/../../teba/TEBA/PHParse","$Bin/../../teba/TEBA","$Bin/../ExtensionPHP");
 
-use Carp qw( confess);
-
 use JSON;
 use WWrong;
 use CommonModel;
