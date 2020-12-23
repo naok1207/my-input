@@ -10,13 +10,15 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_22_104702) do
+ActiveRecord::Schema.define(version: 2020_12_23_003602) do
 
   create_table "qiita", force: :cascade do |t|
     t.string "title", null: false
     t.string "url", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "slack_channel_id"
+    t.index ["slack_channel_id"], name: "index_qiita_on_slack_channel_id"
   end
 
   create_table "slack_channels", force: :cascade do |t|
