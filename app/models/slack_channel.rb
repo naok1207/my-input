@@ -11,7 +11,7 @@
 class SlackChannel < ApplicationRecord
   has_many :qiitum
 
-  def channel(id)
+  def self.channel(id)
     channel_id = SlackChannel.find_by(channel_id: id)
     return channel_id if channel_id.present?
     client = Slack::Web::Client.new
