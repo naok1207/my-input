@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_12_23_003602) do
+ActiveRecord::Schema.define(version: 2020_12_23_012231) do
 
   create_table "qiita", force: :cascade do |t|
     t.string "title", null: false
@@ -18,6 +18,7 @@ ActiveRecord::Schema.define(version: 2020_12_23_003602) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "slack_channel_id"
+    t.string "service_name", null: false
     t.index ["slack_channel_id"], name: "index_qiita_on_slack_channel_id"
   end
 

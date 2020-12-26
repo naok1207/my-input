@@ -3,6 +3,7 @@
 # Table name: qiita
 #
 #  id               :integer          not null, primary key
+#  service_name     :string           not null
 #  title            :string           not null
 #  url              :string           not null
 #  created_at       :datetime         not null

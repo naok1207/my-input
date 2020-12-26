@@ -1,8 +1,12 @@
 .container
   .row.d-flex.justify-content-center
-    .col-sm-10.col-12
+    .col-sm-11.col-12
       .card.mt-5
         .card-body
+          = form_with url: qiitum_index_path, local: true, method: :get, id: 'channel_form' do |f|
+            = f.label :channnel_id, "チャンネル"
+            = f.collection_select(:channel_id, @channels, :id, :name, {include_blank: "全てのチャンネル", selected: @channel_id}, {class: "form-control", id: "channel_select"})
+              
           .d-flex.justify-content-center
             table.table
               thead.border-bottom.border-dark
@@ -10,15 +14,10 @@
                   th scope="col"
                     .mr-3= SlackChannel.human_attribute_name :name
                   th scope="col"
+                    .mr-3= Qiitum.human_attribute_name :service_name
+                  th scope="col"
                     .mr-3= Qiitum.human_attribute_name :title
                   th scope="col"
                     .mr-3= Qiitum.human_attribute_name :url
-              tbody
-                - @qiitum.each do |qiita|
-                  tr
-                    td
-                      .mr-3= qiita.slack_channel.name
-                    td
-                      .mr-3= qiita.title
-                    td
-                      .mr-3= auto_link(qiita.url)
+              tbody#qiitum
+                = render partial: 'qiita', collection: @qiitum

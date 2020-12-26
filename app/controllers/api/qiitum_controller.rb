@@ -8,10 +8,11 @@ class Api::QiitumController < ApplicationController
       if @body['event']['subtype'] == 'message_changed'
         @channel = SlackChannel.channel(@body['event']['channel'])
         @body['event']['message']['attachments'].each do |attachment|
-          next unless attachment['service_name'] == 'Qiita'
+          next unless attachment['service_name'].present?
           qiita = @channel.qiitum.create(
             title:  attachment['title'],
-            url:    attachment['from_url']
+            url:    attachment['from_url'],
+            service_name: attachment['service_name']
           )
         end
       end
